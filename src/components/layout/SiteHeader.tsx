@@ -64,18 +64,58 @@ export function SiteHeader({ locale, dict }: { locale: Locale; dict: Dictionary 
       .filter((element): element is HTMLElement => element !== null);
     if (sections.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible[0]?.target.id) setActive(visible[0].target.id);
-      },
-      { rootMargin: '-96px 0px -55% 0px', threshold: 0 },
-    );
+    /*
+     * Geometry per frame, not an IntersectionObserver — and the swap is a
+     * correctness fix rather than a preference.
+     *
+     * An observer callback carries only the entries that CHANGED, so any rule
+     * written over `entries` is answering "what just crossed a boundary"
+     * instead of "what am I looking at". Two bugs came out of that. Reading the
+     * active section from a single batch meant scrolling out of the last
+     * section delivered one `isIntersecting: false` entry, the filter emptied,
+     * and nothing was set — so "Case Studies" stayed lit through the archive,
+     * the contact form and the footer, a third of the page claiming to be a
+     * section the reader had left. Accumulating the entries into a set instead
+     * fixed the clearing but left stale members: a section could sit in the set
+     * after an anchor jump had carried it off screen without a delivered exit,
+     * and the nav would report `work` while `background` filled the viewport.
+     *
+     * The rule below has no history in it at all. There is one reading line,
+     * just under the nav pill, and the active section is whichever one that
+     * line is INSIDE. Nothing to accumulate, nothing to go stale, and the
+     * answer at any scroll position depends only on that scroll position.
+     *
+     * The `null` case is deliberate and load-bearing: the archive and contact
+     * sections have no nav link, so when the line is in one of them no link is
+     * highlighted. An honest blank beats pointing at the wrong section.
+     */
+    const NAV_CLEARANCE = 120;
 
-    for (const section of sections) observer.observe(section);
-    return () => observer.disconnect();
+    let queued = false;
+
+    const paint = () => {
+      queued = false;
+      let current = '';
+      for (const section of sections) {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= NAV_CLEARANCE && rect.bottom > NAV_CLEARANCE) current = section.id;
+      }
+      setActive(current);
+    };
+
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(paint);
+    };
+
+    paint();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHome, pathname]);
 
