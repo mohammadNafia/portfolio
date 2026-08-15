@@ -129,10 +129,15 @@ export const en = {
           cta: 'View IMMAR Case Study',
         },
         {
-          title: 'NANO',
-          subtitle: 'Arabic OCR Platform',
-          text: 'Turns images of Arabic documents into structured text that can be reviewed, searched, and reused.',
-          cta: 'View NANO Case Study',
+          /*
+           * Every line here already existed for this project: the subtitle is
+           * its `categoryLabel` and the text is its `headline` — the field the
+           * schema designates for cards. Nothing was written for this slot.
+           */
+          title: 'Virtual Banking API',
+          subtitle: 'Fintech backend · Digital wallet',
+          text: 'A money transfer that fails halfway is worse than one that never starts. This project is about the halfway case.',
+          cta: 'View Virtual Banking API Case Study',
         },
         {
           title: 'Al-Tafawuq School System',
@@ -379,6 +384,14 @@ export const en = {
     ctaButton: 'Start a project',
     conceptNotice:
       'The product interfaces on this page are compositions built from each platform’s real module structure. They are not screenshots of production systems — these are private client and commercial platforms.',
+    /*
+     * Used in place of `conceptNotice` on any case study with a supplied hero
+     * export. Both halves have to be said: the image at the top is real product
+     * interface but a presentation render rather than a capture, and the
+     * compositions further down are still coded concepts.
+     */
+    mockupNotice:
+      'The interface above is a presentation mockup of the product, not a screenshot captured from a running system. The interface compositions further down this page are built from the platform’s real module structure — these are private client and commercial platforms.',
   },
 
   about: {

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { isLocale, localeHref, locales, type Locale } from '@/i18n/config';
@@ -95,14 +96,54 @@ export default async function CaseStudyPage({
             </p>
           </Reveal>
 
+          {/*
+            Two heroes, and the difference is not cosmetic.
+
+            A supplied export renders at ITS OWN ratio — `width`/`height` come
+            off the file, never off the slot — because the four that exist are
+            16:9, 4:3, ~4:3 and 1:1, and forcing any of them into one box means
+            either cropping a quarter of the picture away or stretching it. The
+            coded `cover` composition keeps the fixed 16:9 it was drawn for.
+
+            The card chrome goes too. Every export is a presentation render that
+            arrives with its own background and its own drop shadow already
+            baked into the pixels, so `bg-surface` would sit behind an opaque
+            image and `--shadow-card` would be a second shadow under the first.
+            Only the radius survives, so the corners still match the site.
+          */}
           <Reveal className="mt-10" delay={80}>
-            <div className="overflow-hidden rounded-image bg-surface shadow-[var(--shadow-card)]">
-              <div className="aspect-[16/9]">
-                <FanCardArt project={project} variant={project.cover} />
+            {project.heroImage ? (
+              <Image
+                src={project.heroImage.src}
+                width={project.heroImage.width}
+                height={project.heroImage.height}
+                alt={project.heroImage.alt[locale]}
+                /*
+                 * The hero is the LCP element on every case study, so it is
+                 * fetched at once rather than lazily. `sizes` describes the
+                 * real box: the full viewport until the shell stops growing,
+                 * and 1080px after that.
+                 */
+                priority
+                sizes="(max-width: 1176px) 100vw, 1080px"
+                className="h-auto w-full rounded-image"
+              />
+            ) : (
+              <div className="overflow-hidden rounded-image bg-surface shadow-[var(--shadow-card)]">
+                <div className="aspect-[16/9]">
+                  <FanCardArt project={project} variant={project.cover} />
+                </div>
               </div>
-            </div>
+            )}
             <p className="mx-auto mt-4 max-w-[68ch] text-[13px] leading-relaxed text-ink-3">
-              {dict.caseStudy.conceptNotice}
+              {/*
+                The standing notice says these interfaces are "not screenshots
+                of production systems", which stays true of the coded
+                compositions and would be a lie printed under a photograph of
+                real product UI. A page with an export gets a notice that
+                describes both things on it.
+              */}
+              {project.heroImage ? dict.caseStudy.mockupNotice : dict.caseStudy.conceptNotice}
             </p>
           </Reveal>
 

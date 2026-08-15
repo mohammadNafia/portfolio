@@ -20,7 +20,12 @@ import { ContactForm } from '../contact/ContactForm';
  * Each list is index-aligned with its dictionary array. Reorder one and you must
  * reorder the other — `tests/unit/content.test.ts` asserts the lengths match.
  */
-const WORK_SLUGS = ['sendy', 'immar', 'nano-ocr', 'al-tafawuq'] as const;
+/*
+ * NANO left this list for Virtual Banking API. It is not gone from the site:
+ * it keeps its tier-1 case study, its slot in the hero fan and its card in the
+ * archive carousel below — only the selected-work grid changed.
+ */
+const WORK_SLUGS = ['sendy', 'immar', 'virtual-banking', 'al-tafawuq'] as const;
 const CASE_SLUGS = ['sendy', 'immar', 'virtual-banking'] as const;
 const ARCHIVE_SLUGS = [
   'al-tafawuq',

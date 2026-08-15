@@ -55,8 +55,39 @@ export const showcaseSchema = z.enum([
   'nano-output',
   'generic-api',
   'generic-dashboard',
+  'generic-wallet',
 ]);
 export type ShowcaseId = z.infer<typeof showcaseSchema>;
+
+/* ---------------------------------------------------------------------------
+ * Case-study hero image
+ *
+ * Optional, and deliberately so — a project without a supplied export keeps the
+ * coded `cover` composition rather than borrowing another project's picture.
+ *
+ * `width`/`height` are the INTRINSIC dimensions of the source export, not the
+ * dimensions of the slot. The hero renders at the image's own ratio, so these
+ * are what reserves the right box and keeps the page from shifting as it loads,
+ * and they are also what `validateProjects` measures the no-upscale rule
+ * against. Never restate them to fit a slot: they describe the file.
+ * ------------------------------------------------------------------------ */
+
+export const heroImageSchema = z.object({
+  /* Always a pre-rendered WebP under /img — see `scripts/optimize-images.mjs`. */
+  src: z.string().regex(/^\/img\/[a-z0-9-]+\.webp$/),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  alt: localizedSchema,
+});
+export type HeroImage = z.infer<typeof heroImageSchema>;
+
+/**
+ * The widest the case-study hero is ever laid out: `.shell` is `--container`,
+ * 1080px, and the image runs the full measure. A source narrower than this
+ * would be enlarged to fill it, which is the one thing an image pipeline must
+ * never do silently.
+ */
+export const HERO_SLOT_WIDTH = 1080;
 
 /* ---------------------------------------------------------------------------
  * Case-study content blocks
@@ -214,6 +245,8 @@ export const projectSchema = z.object({
   featured: z.boolean(),
   tier: z.union([z.literal(1), z.literal(2)]),
   cover: showcaseSchema,
+  /** Real export for this project's own case-study hero. Absent → `cover` draws it. */
+  heroImage: heroImageSchema.optional(),
   proof: localizedSchema.optional(),
   links: z.array(linkSchema).default([]),
   chapters: z.array(chapterSchema).default([]),
@@ -257,6 +290,28 @@ export function validateProjects(input: unknown[]): Project[] {
   for (const project of parsed) {
     if (slugs.has(project.slug)) throw new Error(`Duplicate project slug: ${project.slug}`);
     slugs.add(project.slug);
+  }
+
+  /*
+   * No hero export may be enlarged into its slot — reported, not enforced.
+   *
+   * The hero runs the full 1080px measure, so a source narrower than that can
+   * only be stretched to fill it. This warns rather than throws: the current
+   * exports were reviewed and accepted knowing they land short of 2x, and a
+   * hard failure would block every build over a trade-off already decided. The
+   * point is that the shortfall stays *visible* — the symptom on its own is a
+   * hero that is slightly soft on a retina display, which is exactly the kind
+   * of thing that ships unnoticed. Restore the throw if it ever needs teeth.
+   */
+  for (const project of parsed) {
+    const hero = project.heroImage;
+    if (hero && hero.width < HERO_SLOT_WIDTH) {
+      console.warn(
+        `[content] Hero image for "${project.slug}" is ${hero.width}px wide, narrower than the ` +
+          `${HERO_SLOT_WIDTH}px slot it fills — it will be enlarged. Re-export at ` +
+          `${HERO_SLOT_WIDTH * 2}px for a sharp 2x hero.`,
+      );
+    }
   }
 
   return parsed;

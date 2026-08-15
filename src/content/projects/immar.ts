@@ -12,7 +12,7 @@
 export const immar = {
   slug: 'immar',
   title: 'IMMAR',
-  titleLocalized: { en: 'IMMAR', ar: 'إعمار' },
+  titleLocalized: { en: 'IMMAR', ar: 'إيمار' },
   category: 'product' as const,
   categoryLabel: {
     en: 'Bilingual education ecosystem',
@@ -31,7 +31,7 @@ export const immar = {
   },
   summary: {
     en: 'IMMAR is a bilingual Arabic/English e-learning ecosystem: a Flutter application for students, and a separate web dashboard for administrators, teachers and authorised teacher staff. I planned the product, defined roles, permissions and session rules, and built the dashboard against a .NET modular-monolith API.',
-    ar: 'إعمار منظومة تعليم إلكتروني ثنائية اللغة: تطبيق Flutter للطلاب، ولوحة ويب منفصلة للإداريين والمعلّمين وطاقم المعلّمين المخوّل. خطّطتُ المنتج، وحدّدتُ الأدوار والصلاحيات وقواعد الجلسات، وبنيتُ اللوحة فوق واجهة .NET أحادية معيارية.',
+    ar: 'إيمار منظومة تعليم إلكتروني ثنائية اللغة: تطبيق Flutter للطلاب، ولوحة ويب منفصلة للإداريين والمعلّمين وطاقم المعلّمين المخوّل. خطّطتُ المنتج، وحدّدتُ الأدوار والصلاحيات وقواعد الجلسات، وبنيتُ اللوحة فوق واجهة .NET أحادية معيارية.',
   },
   problem: {
     en: 'A multi-teacher education platform has two incompatible pressures. Students need a fast, focused, mobile learning surface. Teachers and administrators need dense operational tooling — attendance, assessments, finance, activation codes, reporting. Building one interface for both produces a product that serves neither.',
@@ -88,6 +88,15 @@ export const immar = {
   featured: true,
   tier: 1 as const,
   cover: 'immar-dashboard' as const,
+  heroImage: {
+    src: '/img/hero-immar.webp',
+    width: 1920,
+    height: 1080,
+    alt: {
+      en: 'The IMMAR dashboard at an angle, showing its Arabic side navigation and the student welcome panel.',
+      ar: 'لوحة إيمار بزاوية، ويظهر فيها شريط التنقّل العربي الجانبي ولوحة ترحيب الطالب.',
+    },
+  },
   proof: {
     en: 'Delivered ecosystem · Mobile + web',
     ar: 'منظومة مُسلَّمة · هاتف + ويب',
@@ -96,11 +105,11 @@ export const immar = {
   seo: {
     title: {
       en: 'IMMAR — Bilingual education ecosystem: student mobile app and operational dashboard',
-      ar: 'إعمار — منظومة تعليمية ثنائية اللغة: تطبيق طالب ولوحة تشغيل',
+      ar: 'إيمار — منظومة تعليمية ثنائية اللغة: تطبيق طالب ولوحة تشغيل',
     },
     description: {
       en: 'Planning and engineering IMMAR: a bilingual Arabic/English e-learning ecosystem separating a student mobile application from an operational web dashboard through one permission model.',
-      ar: 'تخطيط وهندسة إعمار: منظومة تعليم إلكتروني ثنائية اللغة تفصل تطبيق الطالب عن لوحة التشغيل عبر نموذج صلاحيات واحد.',
+      ar: 'تخطيط وهندسة إيمار: منظومة تعليم إلكتروني ثنائية اللغة تفصل تطبيق الطالب عن لوحة التشغيل عبر نموذج صلاحيات واحد.',
     },
   },
   chapters: [
@@ -112,7 +121,7 @@ export const immar = {
           type: 'lead' as const,
           text: {
             en: 'The defining decision in IMMAR was made before any interface was designed: students would get their own application, and the web dashboard would never be for them.',
-            ar: 'القرار الحاسم في إعمار اتُّخذ قبل تصميم أي واجهة: للطلاب تطبيقهم الخاص، ولوحة الويب لن تكون لهم أبداً.',
+            ar: 'القرار الحاسم في إيمار اتُّخذ قبل تصميم أي واجهة: للطلاب تطبيقهم الخاص، ولوحة الويب لن تكون لهم أبداً.',
           },
         },
         {
@@ -140,7 +149,7 @@ export const immar = {
           type: 'prose' as const,
           text: {
             en: 'IMMAR is multi-teacher. A teacher owns their content and their students; teacher staff act on a teacher’s behalf within limits; administrators operate the platform across everyone. Getting that hierarchy wrong exposes one teacher’s material — or one teacher’s revenue — to another.',
-            ar: 'إعمار منصة متعدّدة المعلّمين. المعلّم يملك محتواه وطلابه؛ وطاقم المعلّم يعمل نيابةً عنه ضمن حدود؛ والإداريون يشغّلون المنصة عبر الجميع. الخطأ في هذه الهرمية يكشف محتوى معلّم — أو إيراداته — لمعلّم آخر.',
+            ar: 'إيمار منصة متعدّدة المعلّمين. المعلّم يملك محتواه وطلابه؛ وطاقم المعلّم يعمل نيابةً عنه ضمن حدود؛ والإداريون يشغّلون المنصة عبر الجميع. الخطأ في هذه الهرمية يكشف محتوى معلّم — أو إيراداته — لمعلّم آخر.',
           },
         },
         {
@@ -191,7 +200,7 @@ export const immar = {
           id: 'immar-roles' as const,
           caption: {
             en: 'Interface concept — role and permission management. Composed from IMMAR’s real permission catalogue; not a captured screenshot.',
-            ar: 'تصوّر للواجهة — إدارة الأدوار والصلاحيات. مبني على كتالوج الصلاحيات الفعلي لإعمار، وليس لقطة شاشة.',
+            ar: 'تصوّر للواجهة — إدارة الأدوار والصلاحيات. مبني على كتالوج الصلاحيات الفعلي لإيمار، وليس لقطة شاشة.',
           },
         },
       ],
@@ -403,7 +412,7 @@ export const immar = {
           type: 'prose' as const,
           text: {
             en: 'IMMAR is the project that convinced me most of my job is drawing boundaries. The hard parts were not the modules — courses, quizzes, attendance, finance are all solvable. The hard part was deciding what each role is allowed to see and holding that line while the feature list grew.',
-            ar: 'إعمار هو المشروع الذي أقنعني أن معظم عملي هو رسم الحدود. لم تكن الوحدات هي الجزء الصعب — المقرّرات والاختبارات والحضور والمالية كلها قابلة للحل. الصعب كان تحديد ما يُسمح لكل دور برؤيته، والتمسّك بذلك الحدّ بينما تتوسّع قائمة الميزات.',
+            ar: 'إيمار هو المشروع الذي أقنعني أن معظم عملي هو رسم الحدود. لم تكن الوحدات هي الجزء الصعب — المقرّرات والاختبارات والحضور والمالية كلها قابلة للحل. الصعب كان تحديد ما يُسمح لكل دور برؤيته، والتمسّك بذلك الحدّ بينما تتوسّع قائمة الميزات.',
           },
         },
       ],

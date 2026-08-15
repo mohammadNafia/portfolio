@@ -75,6 +75,15 @@ export const altafawuq = {
   featured: false,
   tier: 2 as const,
   cover: 'generic-dashboard' as const,
+  heroImage: {
+    src: '/img/hero-al-tafawuq.webp',
+    width: 1254,
+    height: 1254,
+    alt: {
+      en: 'The Al-Tafawuq administrator dashboard: attendance over thirty days, tuition totals, pending tasks and the latest payments.',
+      ar: 'لوحة تحكّم إدارة مدرسة التفوّق: الحضور خلال ثلاثين يوماً، ومجاميع الأقساط، والمهام المعلّقة، وآخر الدفعات.',
+    },
+  },
   links: [],
   seo: {
     title: {
@@ -215,11 +224,11 @@ export const securebank = {
   titleLocalized: { en: 'Virtual Banking API', ar: 'واجهة المصرف الافتراضي' },
   category: 'backend' as const,
   categoryLabel: {
-    en: 'Fintech backend · Digital wallet',
-    ar: 'خادم تقنية مالية · محفظة رقمية',
+    en: 'Digital wallet · Fintech platform',
+    ar: 'محفظة رقمية · منصة تقنية مالية',
   },
   classification: 'independent' as const,
-  role: { en: 'Backend engineer', ar: 'مهندس خادم' },
+  role: { en: 'Full-stack engineer', ar: 'مهندس برمجيات متكامل' },
   year: '2025',
   status: { en: 'Independent build', ar: 'مشروع مستقل' },
   headline: {
@@ -227,8 +236,8 @@ export const securebank = {
     ar: 'التحويل المالي الذي يفشل في منتصفه أسوأ من الذي لا يبدأ أصلاً. هذا المشروع عن حالة المنتصف.',
   },
   summary: {
-    en: 'A fintech-style digital wallet and transaction system on ASP.NET Core with OTP authentication, multi-step KYC verification, a full transaction lifecycle with fund reservation and idempotency, fraud triggers, batch payroll and audit logging — built on a Clean Architecture codebase.',
-    ar: 'محفظة رقمية ونظام معاملات بأسلوب التقنية المالية على ASP.NET Core، مع مصادقة OTP وتحقّق هوية متعدّد الخطوات ودورة حياة معاملة كاملة تشمل حجز الأموال ومفاتيح عدم التكرار ومحفّزات الاحتيال ورواتب دفعية وسجل تدقيق — على قاعدة معمارية نظيفة.',
+    en: 'A fintech-style digital wallet — a client interface for accounts, cards and transfers, over an ASP.NET Core system with OTP authentication, multi-step KYC verification, a full transaction lifecycle with fund reservation and idempotency, fraud triggers, batch payroll and audit logging — built on a Clean Architecture codebase.',
+    ar: 'محفظة رقمية بأسلوب التقنية المالية — واجهة عميل للحسابات والبطاقات والتحويلات، فوق نظام على ASP.NET Core مع مصادقة OTP وتحقّق هوية متعدّد الخطوات ودورة حياة معاملة كاملة تشمل حجز الأموال ومفاتيح عدم التكرار ومحفّزات الاحتيال ورواتب دفعية وسجل تدقيق — على قاعدة معمارية نظيفة.',
   },
   problem: {
     en: 'Financial software is judged entirely on its failure paths. A retry that charges twice, a transfer that debits without crediting, a fraud rule that only runs on the happy path — each is a correctness bug that costs real money.',
@@ -242,6 +251,10 @@ export const securebank = {
     {
       en: 'Designed a digital wallet on ASP.NET Core with OTP authentication, multi-step KYC verification and admin approval workflows.',
       ar: 'صمّمتُ محفظة رقمية على ASP.NET Core بمصادقة OTP وتحقّق هوية متعدّد الخطوات ومسارات موافقة إدارية.',
+    },
+    {
+      en: 'Built the wallet client on top of it: the account view, card balance, transfer and receive flows, and the transaction history.',
+      ar: 'بنيتُ واجهة المحفظة فوقه: عرض الحساب، ورصيد البطاقة، ومسارات الإرسال والاستلام، وسجلّ المعاملات.',
     },
     {
       en: 'Modelled one account linked to multiple card types with rule-based spending constraints.',
@@ -262,11 +275,36 @@ export const securebank = {
     { en: 'API design', ar: 'تصميم الواجهات' },
     { en: 'Reliability engineering', ar: 'هندسة الموثوقية' },
   ],
-  accent: '#1d8fa8',
-  accentName: 'Fintech teal',
+  /*
+   * The image's own blue, not a colour picked next to it.
+   *
+   * The hero export is dominated by a solid #2462e9 field, and the accent used
+   * to be a teal — so the page opened with a teal classification pill sitting
+   * on a blue slab, which is two accents on one screen and against this
+   * project's own rule. Matching the accent to the wallet UI resolves it in the
+   * direction that keeps the picture honest: the product really is that blue.
+   * It reads better as text, too — the teal measured about 3.3:1 on --surface
+   * where the outcome heading uses it, and this measures 5.35:1.
+   */
+  accent: '#2462e9',
+  accentName: 'Wallet blue',
   featured: false,
   tier: 2 as const,
-  cover: 'generic-api' as const,
+  /*
+   * Not `generic-api` any more. This project ships a client as well as the API
+   * behind it, so the face that represents it everywhere — the work grid, the
+   * hero fan, the archive — is the wallet, not a bare request lifecycle.
+   */
+  cover: 'generic-wallet' as const,
+  heroImage: {
+    src: '/img/hero-virtual-banking.webp',
+    width: 1920,
+    height: 1440,
+    alt: {
+      en: 'A wallet account screen on a phone: card balance, add, send and receive actions, and a list of recent transactions.',
+      ar: 'شاشة حساب محفظة على هاتف: رصيد البطاقة، وأزرار الإضافة والإرسال والاستلام، وقائمة بآخر المعاملات.',
+    },
+  },
   links: [],
   seo: {
     title: {
@@ -395,6 +433,14 @@ export const securebank = {
               items: ['EF Core', 'Audit log', 'CSV export'],
             },
           ],
+        },
+        {
+          type: 'callout' as const,
+          title: { en: 'The client on top of it', ar: 'الواجهة فوقه' },
+          text: {
+            en: 'The wallet interface is part of this project, not a separate one. It is the surface the lifecycle above is designed for: an account view, a card balance, send and receive, and a transaction history that has to stay truthful while a transfer is still resolving. A transfer that is Processing has to look like something a person can read — which is a client concern the state machine was shaped around, not an afterthought bolted to a finished API.',
+            ar: 'واجهة المحفظة جزء من هذا المشروع لا مشروعاً منفصلاً. هي السطح الذي صُمّمت له دورة الحياة أعلاه: عرض الحساب، ورصيد البطاقة، والإرسال والاستلام، وسجلّ معاملات عليه أن يبقى صادقاً بينما التحويل ما زال قيد الحسم. فالتحويل «قيد المعالجة» عليه أن يبدو شيئاً يقرأه إنسان — وهذا شأن واجهة تشكّلت حوله آلة الحالات، لا إضافة لاحقة رُكّبت على واجهة برمجية مكتملة.',
+          },
         },
       ],
     },
@@ -701,9 +747,29 @@ export const invoiceApp = {
         {
           type: 'prose' as const,
           text: {
-            en: 'This was built during the Iraq TechSchool programme, delivered in collaboration with QiCard, Digital Zone, Computiq and HUB200 — which is why the fintech and digital-payment workflow concepts in it come from the industry partners rather than from a textbook.',
-            ar: 'بُني هذا خلال برنامج Iraq TechSchool، المُقدَّم بالتعاون مع QiCard وDigital Zone وComputiq وHUB200 — ولهذا جاءت مفاهيم مسارات الدفع الرقمي فيه من شركاء القطاع لا من كتاب دراسي.',
+            en: 'I built this during my work and training at Qi Card, inside the Iraq TechSchool programme delivered in collaboration with Qi Card, Digital Zone, Computiq and HUB200 — which is why the fintech and digital-payment workflow concepts in it come from the industry partners rather than from a textbook.',
+            ar: 'بنيتُ هذا خلال عملي وتدريبي في Qi Card، ضمن برنامج Iraq TechSchool المُقدَّم بالتعاون مع Qi Card وDigital Zone وComputiq وHUB200 — ولهذا جاءت مفاهيم مسارات الدفع الرقمي فيه من شركاء القطاع لا من كتاب دراسي.',
           },
+        },
+        {
+          type: 'prose' as const,
+          text: {
+            en: 'It is a training project and I read it as one. The build itself is small. What I took from it is narrower than the feature list, and more useful than it.',
+            ar: 'هو مشروع تدريبي، وأنا أقرأه على هذا الأساس. البناء نفسه صغير. وما خرجتُ به منه أضيق من قائمة الميزات، وأنفع منها.',
+          },
+        },
+        {
+          type: 'bullets' as const,
+          items: [
+            {
+              en: 'Working inside a closed environment — SuperQi’s — where I did not control the platform, the APIs, or the constraints. The edges were set before I arrived, and the work was building something correct inside them rather than arguing with them.',
+              ar: 'العمل داخل بيئة مغلقة — بيئة SuperQi — لا أتحكّم فيها بالمنصة ولا بالواجهات ولا بالقيود. الحدود كانت مرسومة قبل وصولي، والشغل أن أبني شيئاً صحيحاً داخلها لا أن أجادلها.',
+            },
+            {
+              en: 'Working from documentation: reading it closely, and verifying behaviour against it rather than assuming what a call would do.',
+              ar: 'العمل انطلاقاً من التوثيق: أقرأه بدقّة، وأتحقّق من السلوك الفعلي مقابله بدل أن أفترض ما سيفعله الاستدعاء.',
+            },
+          ],
         },
         {
           type: 'facts' as const,
