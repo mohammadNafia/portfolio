@@ -1,0 +1,59 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# next.js
+.next/
+out/
+next-env.d.ts
+
+# production
+build/
+dist/
+
+# cloudflare / opennext
+.open-next/
+.wrangler/
+worker-configuration.d.ts
+
+# testing
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# misc
+.DS_Store
+*.pem
+Thumbs.db
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# env files
+.env
+.env*.local
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# editor
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Review artifacts — regenerate with `node scripts/shoot.mjs`
+docs/screenshots/
+
+# Captures of third-party reference sites, kept locally for analysis only
+docs/reference/
