@@ -9,15 +9,16 @@
     "",
     "These are public URLs, not secrets. Nothing sensitive belongs here.",
     "",
-    "Replace WORKERS_SUBDOMAIN with the account's workers.dev subdomain; the",
-    "deploy script refuses to run while the placeholder is present."
+    "Production stays on workers.dev until DNS is pointed at the Worker; swap",
+    "it to https://mohammednafia.com as part of that cutover, not before, or",
+    "the canonical tags will name a host that does not resolve yet."
   ],
 
   "staging": {
-    "siteUrl": "https://portfolio-staging.WORKERS_SUBDOMAIN.workers.dev"
+    "siteUrl": "https://portfolio-staging.mohammadnafia1.workers.dev"
   },
 
   "production": {
-    "siteUrl": "https://portfolio-production.WORKERS_SUBDOMAIN.workers.dev"
+    "siteUrl": "https://portfolio-production.mohammadnafia1.workers.dev"
   }
 }
