@@ -250,7 +250,13 @@ test.describe('404', () => {
  */
 test.describe('generated metadata routes', () => {
   for (const [path, type] of [
-    ['/icon', /image\/png/],
+    /*
+     * `/icon.png`, not `/icon`. The ImageResponse route that answered the bare
+     * path was retired when the generated icon set landed — `src/app/icon.tsx`
+     * became `src/app/icon.png`, which Next serves by convention at the path
+     * with the extension. This asked for the old one and had been failing since.
+     */
+    ['/icon.png', /image\/png/],
     ['/robots.txt', /text\/plain/],
     ['/sitemap.xml', /xml/],
   ] as const) {
@@ -492,4 +498,45 @@ test.describe('no horizontal overflow', () => {
       });
     }
   }
+});
+
+/**
+ * The carousel is shared, so it has to be safe to put two of them on one page.
+ *
+ * The version this one grew out of addressed its cards through
+ * `document.getElementById('case-card-N')`, which is correct for exactly as
+ * long as there is one carousel in the document and silently drives the wrong
+ * one the moment there are two. These assertions pin the two properties that
+ * make a second instance safe: ids are namespaced per instance, and the
+ * keyboard handler only reaches the carousel that holds focus.
+ */
+test.describe('carousel', () => {
+  test('namespaces its card ids and dot targets', async ({ page }) => {
+    await page.goto('/en');
+    const targets = await page
+      .locator('#archive [role="tab"]')
+      .evaluateAll((dots) => dots.map((dot) => dot.getAttribute('aria-controls')));
+
+    expect(targets).toHaveLength(5);
+    expect(new Set(targets).size, 'two dots point at the same card').toBe(5);
+
+    for (const target of targets) {
+      expect(await page.locator(`[id="${target}"]`).count(), `${target} is not unique`).toBe(1);
+    }
+  });
+
+  test('advances on arrow keys only while it holds focus', async ({ page }) => {
+    await page.goto('/en');
+    const dots = page.locator('#archive [role="tab"]');
+    await dots.first().scrollIntoViewIfNeeded();
+    await dots.first().focus();
+
+    await page.keyboard.press('ArrowRight');
+    await expect(dots.nth(1)).toHaveAttribute('aria-selected', 'true');
+
+    // Focus somewhere outside it: the arrows must stop reaching the carousel.
+    await page.locator('#work a').first().focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(dots.nth(1)).toHaveAttribute('aria-selected', 'true');
+  });
 });
