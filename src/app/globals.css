@@ -529,10 +529,24 @@
     margin: 0;
   }
 
+  /*
+   * 0.10em, not the 0.14em this line used to carry. The old headline ended on
+   * "&", so nothing after the tracking had to hold together as a word. This one
+   * ends on "AI", and at 0.14em the pair reads as two loose initials — "A I" —
+   * instead of a unit. 0.10em is the point where AI closes up and the line still
+   * reads as tracked display type.
+   *
+   * The negative inline-end margin cancels the trailing letter-space. Tracking
+   * is added *after* every glyph including the last, so the span box carries a
+   * 0.10em tail of nothing on its right; centring the box therefore parks the
+   * ink half that tail left of centre, and the two tiers visibly disagree about
+   * where the middle is. Removing the tail centres ink against ink.
+   */
   .hero__line1 {
     font-size: clamp(28px, 3.4vw, 46px);
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.1em;
+    margin-inline-end: -0.1em;
     text-transform: uppercase;
     line-height: 1.1;
     color: var(--color-ink);
@@ -554,9 +568,13 @@
     animation: rise-in 650ms var(--ease-out) 100ms both;
   }
 
-  /* Arabic: no tracking, no fake casing, more leading. */
+  /* Arabic: no tracking, no fake casing, more leading. No tracking also means
+   * no trailing letter-space, so the Latin centring compensation has to go with
+   * it — left in, it would pull the Arabic line off-centre by the amount it was
+   * meant to correct. */
   [dir='rtl'] .hero__line1 {
     letter-spacing: 0;
+    margin-inline-end: 0;
     text-transform: none;
     line-height: 1.35;
   }
@@ -675,7 +693,9 @@
     justify-content: space-between;
     gap: 12px;
     height: 56px;
-    width: 260px;
+    /* Collapsed: avatar + locale switch + CTA. The locale switch is permanent,
+       so the collapsed width has to carry it — 260px cut into the CTA. */
+    width: 312px;
     padding: 6px 6px 6px 10px;
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(14px);
@@ -691,7 +711,7 @@
   }
 
   .nav-pill[data-expanded='true'] {
-    width: 560px;
+    width: 612px;
   }
 
   /* Arabic runs longer — size the expanded pill to content instead. */
@@ -759,6 +779,45 @@
     font-weight: 600;
   }
 
+  /*
+    Locale switch — a fixture of the pill, never part of the collapsible group.
+    `flex: none` so it survives the pill's width transition intact, and a 40px
+    box so it clears the touch-target floor on the phone where it matters most.
+  */
+  .nav-pill__locale {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    min-width: 40px;
+    height: 40px;
+    padding-inline: 10px;
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    color: var(--color-ink-2);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transition:
+      background var(--dur-btn),
+      color var(--dur-link);
+  }
+
+  .nav-pill__locale:hover {
+    background: var(--color-bg-alt);
+    color: var(--color-ink);
+  }
+
+  .nav-pill__locale:active {
+    transform: scale(0.96);
+  }
+
+  /* Arabic's single glyph sits small next to a two-letter "EN" — nudge it up. */
+  .nav-pill__locale[lang='ar'] {
+    font-size: 17px;
+  }
+
   .nav-pill__cta {
     display: inline-flex;
     align-items: center;
@@ -786,11 +845,16 @@
     transform: scale(0.96);
   }
 
-  /* Mobile: stays collapsed, links drop out, CTA remains. */
+  /*
+    Mobile: stays collapsed, links drop out, locale switch and CTA remain.
+    Only the link group is allowed to disappear here — the locale switch is the
+    site's one non-negotiable control and has no other home on a phone.
+  */
   @media (max-width: 760px) {
     .nav-pill,
     .nav-pill[data-expanded='true'] {
       width: auto;
+      max-width: calc(100vw - 24px);
       gap: 10px;
     }
 

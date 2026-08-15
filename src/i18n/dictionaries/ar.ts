@@ -88,9 +88,19 @@ export const ar = {
 
   home: {
     hero: {
-      eyebrow: 'مهندس برمجيات FULL-STACK · مؤسس منتجات',
-      titleTop: 'مهندس برمجيات FULL-STACK',
-      titleMain: 'ومؤسس منتجات',
+      eyebrow: 'مهندس برمجيات وذكاء اصطناعي',
+      /*
+       * The tiers land in the opposite order to English, and that is deliberate.
+       * `مهندس` is the مضاف and `برمجيات وذكاء اصطناعي` the مضاف إليه, so the
+       * head noun has to lead — which puts the display line on top here and
+       * second in English. `titleMain` is always the display line, `titleTop`
+       * always the tracked UI line; in Arabic `titleTop` renders *below* it.
+       *
+       * The `و` travels with the second line. Stranding it at the end of
+       * `مهندس برمجيات` would leave a conjunction hanging with nothing to join.
+       */
+      titleTop: 'برمجيات وذكاء اصطناعي',
+      titleMain: 'مهندس',
       headline: 'أبني منتجات رقمية تعمل فعلًا في العالم الحقيقي.',
       support:
         'من أنظمة التجارة متعددة المستأجرين إلى منصات الذكاء الاصطناعي والتعليم، أحوّل الأفكار المعقدة إلى برمجيات موثوقة وسهلة الاستخدام.',

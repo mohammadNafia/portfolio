@@ -4,15 +4,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { localeHref, switchLocalePath, type Locale } from '@/i18n/config';
+import { localeHref, localeLabel, switchLocalePath, type Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/dictionaries/en';
 
 /**
  * Floating nav pill.
  *
  * Two states, per the component spec:
- *   collapsed  — avatar + CTA only, ≈260px, at the top of the home page
- *   expanded   — avatar + links + CTA, ≈560px, after ~70% of the hero
+ *   collapsed  — avatar + locale + CTA, ≈310px, at the top of the home page
+ *   expanded   — avatar + links + locale + CTA, ≈600px, after ~70% of the hero
+ *
+ * Only the link group collapses. The avatar, the locale switch and the CTA are
+ * permanent at every breakpoint.
  *
  * On sub-pages it starts expanded: there is no hero to collapse against, and
  * orientation matters more than the reveal.
@@ -122,17 +125,27 @@ export function SiteHeader({ locale, dict }: { locale: Locale; dict: Dictionary 
             {link.label}
           </a>
         ))}
-        <Link
-          href={switchLocalePath(pathname, otherLocale)}
-          lang={otherLocale}
-          hrefLang={otherLocale}
-          aria-label={
-            otherLocale === 'ar' ? dict.common.switchToArabic : dict.common.switchToEnglish
-          }
-        >
-          {otherLocale === 'ar' ? 'ع' : 'EN'}
-        </Link>
       </div>
+
+      {/*
+        The locale switch is a permanent part of the pill, not one of the
+        collapsible links. On a bilingual site it is the one control that can
+        never be hidden: below 760px the link group drops out entirely, and an
+        Arabic reader landing on /en would have been left editing the URL by
+        hand. It sits between the links and the CTA so the pill still reads
+        identity → navigation → locale → action in both directions.
+      */}
+      <Link
+        href={switchLocalePath(pathname, otherLocale)}
+        lang={otherLocale}
+        hrefLang={otherLocale}
+        className="nav-pill__locale"
+        aria-label={
+          otherLocale === 'ar' ? dict.common.switchToArabic : dict.common.switchToEnglish
+        }
+      >
+        {localeLabel[otherLocale]}
+      </Link>
 
       <a href={hrefFor('work-with-me')} className="nav-pill__cta">
         {dict.common.workWithMe}

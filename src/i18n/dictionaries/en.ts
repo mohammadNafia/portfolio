@@ -90,10 +90,10 @@ export const en = {
 
   home: {
     hero: {
-      eyebrow: 'FULL-STACK SOFTWARE ENGINEER · PRODUCT FOUNDER',
+      eyebrow: 'SOFTWARE & AI ENGINEER',
       /* The hero lockup is two tiers: a wide-tracked line above a display line. */
-      titleTop: 'FULL-STACK SOFTWARE ENGINEER &',
-      titleMain: 'PRODUCT FOUNDER',
+      titleTop: 'SOFTWARE & AI',
+      titleMain: 'ENGINEER',
       headline: 'I build digital products that survive the real world.',
       support:
         'From multi-tenant commerce systems to AI and education platforms, I turn complex ideas into reliable, usable software.',
