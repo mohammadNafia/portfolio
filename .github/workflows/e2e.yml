@@ -1,0 +1,68 @@
+# The check that `main` requires before a PR can merge.
+#
+# The job name below ("verify") is what gets selected as a required status
+# check in the branch protection rule — renaming it silently detaches the
+# protection, so keep it stable.
+name: e2e
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [develop]
+
+# A force-push or rapid follow-up commit should cancel the superseded run
+# rather than queue behind it.
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      # Guards the loader contract: `src/lib/image-variants.ts` is generated,
+      # and a committed copy that disagrees with the sources would let the
+      # loader emit URLs for files that were never written.
+      - name: Image variants are in sync
+        run: |
+          npm run images
+          git diff --exit-code --stat -- src/lib/image-variants.ts public/img \
+            || (echo "::error::public/img or image-variants.ts is stale — run 'npm run images' and commit the result" && exit 1)
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: e2e
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

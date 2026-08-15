@@ -1,0 +1,65 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  // Base config. Neither of these names is deployed to directly — every deploy
+  // goes through `--env production` or `--env staging`, which override `name`.
+  // The bare `portfolio` name exists only so `wrangler` has a valid default.
+  "name": "portfolio",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-01",
+
+  // `nodejs_compat` is required by OpenNext — the Next.js server runtime pulls
+  // in node:* builtins. `global_fetch_strictly_public` makes fetches to the
+  // Worker's own hostname go back out through the edge rather than looping
+  // internally, which is what Next's server-side data fetching expects.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+
+  // Prerendered pages, `/img/**` variants and other static files. Served from
+  // the asset store, NOT the Worker bundle — none of this counts against the
+  // 3 MiB compressed Worker limit.
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  "observability": {
+    "enabled": true
+  },
+
+  // ---------------------------------------------------------------------------
+  // No `vars` block anywhere in this file, by policy.
+  //
+  // Runtime secrets (RESEND_API_KEY, CONTACT_TO_EMAIL, CONTACT_FROM_EMAIL) are
+  // set with `wrangler secret put --env <env>`; this file is committed and
+  // public, so nothing sensitive can live here.
+  //
+  // NEXT_PUBLIC_SITE_URL is a *build-time* variable — Next.js inlines
+  // `NEXT_PUBLIC_*` into the bundle and the sitemap/robots/canonical URLs are
+  // baked during prerender. Setting it as a Worker var would have no effect.
+  // It belongs in the build environment. See DEPLOY.md.
+  // ---------------------------------------------------------------------------
+
+  "env": {
+    "production": {
+      "name": "portfolio-production",
+      "compatibility_date": "2026-08-01",
+      "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+      "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS"
+      },
+      "observability": { "enabled": true }
+    },
+
+    "staging": {
+      "name": "portfolio-staging",
+      "compatibility_date": "2026-08-01",
+      "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+      "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS"
+      },
+      "observability": { "enabled": true }
+    }
+  }
+}
