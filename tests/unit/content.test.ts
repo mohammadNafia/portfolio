@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { globSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import path from 'node:path';
 import { projects, featuredProjects, archiveProjects, getProject, getNextProject } from '@/content';
 import { locales } from '@/i18n/config';
 import { showcaseSchema } from '@/content/schema';
@@ -264,7 +264,14 @@ describe('stylesheet hygiene', () => {
    * a font size in a bare `var()`, and silently drops the declaration.
    */
   it('never uses a bare var() in an arbitrary text utility', () => {
-    const sources = globSync('src/**/*.tsx');
+    /*
+     * `readdirSync({ recursive })` rather than `fs.globSync`, which only
+     * arrived in Node 22 — this package supports >=20.9.0, and CI runs 20, so
+     * globSync passed locally and threw there.
+     */
+    const sources = readdirSync('src', { recursive: true, encoding: 'utf8' })
+      .filter((entry) => entry.endsWith('.tsx'))
+      .map((entry) => path.join('src', entry));
     const offenders = sources.filter((file) =>
       /text-\[var\(/.test(readFileSync(file, 'utf8')),
     );
