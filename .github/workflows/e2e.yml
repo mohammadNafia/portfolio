@@ -60,7 +60,7 @@ jobs:
             || { echo "::error::src/lib/image-variants.ts is stale — run 'npm run images' and commit it"; exit 1; }
 
           git add -A public/img
-          MISSING=$(git diff --cached --name-status -- public/img | grep -E '^[AD]' || true)
+          MISSING=$(git diff --no-renames --cached --name-status -- public/img | grep -E '^[AD]' || true)
           if [ -n "$MISSING" ]; then
             echo "::error::public/img is missing files the generator produces — run 'npm run images' and commit the result"
             echo "$MISSING"
