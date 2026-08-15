@@ -9,9 +9,17 @@
     "",
     "These are public URLs, not secrets. Nothing sensitive belongs here.",
     "",
-    "Production stays on workers.dev until DNS is pointed at the Worker; swap",
-    "it to https://mohammednafia.com as part of that cutover, not before, or",
-    "the canonical tags will name a host that does not resolve yet."
+    "Production names the real domain even before DNS is cut over. That is",
+    "deliberate: the workers.dev deployment then carries canonical tags",
+    "pointing at mohammednafia.com, which is what stops search engines",
+    "indexing the workers.dev copy as a duplicate of the real site. The",
+    "trade is a short window where og:image resolves to a host that is not",
+    "live yet — acceptable, because nothing links to production until DNS",
+    "lands, and the alternative risks the workers.dev URL being indexed as",
+    "canonical, which is far harder to undo.",
+    "",
+    "No trailing slash, no www — src/lib/site.ts concatenates paths directly,",
+    "and a trailing slash yields https://host//en in every canonical tag."
   ],
 
   "staging": {
@@ -19,6 +27,6 @@
   },
 
   "production": {
-    "siteUrl": "https://portfolio-production.mohammadnafia1.workers.dev"
+    "siteUrl": "https://mohammednafia.com"
   }
 }
