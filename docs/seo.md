@@ -112,8 +112,8 @@ language of a commercial query, and no amount of it will capture one.
 | Term | Target page |
 | --- | --- |
 | `محمد نافع` + `مبرمج` / `مهندس برمجيات` | `/ar`, `/ar/about` |
-| `محمد نافع ساندي` | `/ar/work/sendy` |
-| `إعمار منصة تعليمية` | `/ar/work/immar` |
+| `محمد نافع سندي` | `/ar/work/sendy` |
+| `إيمار منصة تعليمية` | `/ar/work/immar` |
 | `برمجة نظام متعدد المستأجرين` | `/ar/services` — very low volume |
 | `تنفيذ واجهات عربية RTL` | needs an article |
 | `استخراج نص من صورة بالعربية` | `/ar/work/nano-ocr` — genuinely thin SERP |
