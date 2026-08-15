@@ -31,10 +31,87 @@ const ENVIRONMENTS = ['staging', 'production'];
 const args = process.argv.slice(2);
 const env = args.find((a) => !a.startsWith('-'));
 const dryRun = args.includes('--dry-run');
+const allowDirty = args.includes('--allow-dirty');
 
 if (!ENVIRONMENTS.includes(env)) {
-  console.error(`\n  Usage: node scripts/deploy.mjs <${ENVIRONMENTS.join('|')}> [--dry-run]\n`);
+  console.error(
+    `\n  Usage: node scripts/deploy.mjs <${ENVIRONMENTS.join('|')}> [--dry-run] [--allow-dirty]\n`,
+  );
   process.exit(1);
+}
+
+/*
+ * Refuse to deploy from a dirty working tree.
+ *
+ * This builds from the working directory, not from a commit, so whatever
+ * happens to be on disk is what goes live. That is not hypothetical: the site
+ * ran for days on a hero refactor, a rewritten dictionary and a CV PDF that
+ * existed in nobody's git history — production was the only copy, and a disk
+ * failure would have been the end of it. Nothing in the deploy path said a
+ * word about it, because nothing was looking.
+ *
+ * Refuse rather than warn. A warning is the right shape for something you want
+ * noticed; this is something you want STOPPED, because by the time the warning
+ * scrolls past, the upload has already happened and the only way back is to
+ * reconstruct the previous state from a Worker version. The failure mode of
+ * refusing is thirty seconds and a commit. The failure mode of warning is the
+ * situation this check exists to prevent, happening again with a note in the
+ * log saying so.
+ *
+ * `--allow-dirty` is deliberately kept: an emergency rollback or a
+ * one-off experiment against staging is legitimate, and a guard with no way
+ * past it gets deleted by whoever hits it at 2am. It prints the file list
+ * either way, so the choice is at least made with the list in view.
+ */
+function workingTreeStatus() {
+  try {
+    /*
+     * `--porcelain` is the stable, script-facing format — the human one is
+     * explicitly not covered by git's compatibility promise. Untracked files
+     * are INCLUDED (they are the half that bit us: the CV was untracked, not
+     * merely modified), but ignored files are not.
+     */
+    return execFileSync('git', ['status', '--porcelain', '--untracked-files=normal'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch {
+    /*
+     * No git, or not a repository. Returning null rather than '' distinguishes
+     * "cannot tell" from "clean", and the caller treats them differently — a
+     * missing git is a reason to warn, never a reason to claim the tree is
+     * clean and wave the deploy through.
+     */
+    return null;
+  }
+}
+
+const status = workingTreeStatus();
+
+if (status === null) {
+  console.warn(
+    `\n  Could not read git status — deploying without a cleanliness check.` +
+      `\n  Whatever is on disk is what will go live.\n`,
+  );
+} else if (status) {
+  const files = status.split('\n');
+  const shown = files.slice(0, 40);
+
+  const message =
+    `\n  The working tree has ${files.length} uncommitted change${files.length === 1 ? '' : 's'}:\n\n` +
+    shown.map((line) => `    ${line}`).join('\n') +
+    (files.length > shown.length ? `\n    … and ${files.length - shown.length} more` : '') +
+    `\n\n  This script builds from the working directory, so these would go live` +
+    `\n  while existing only on this machine.\n`;
+
+  if (allowDirty) {
+    console.warn(`${message}\n  --allow-dirty was passed. Continuing.\n`);
+  } else {
+    console.error(
+      `${message}\n  Commit them first, or pass --allow-dirty if this is deliberate.\n`,
+    );
+    process.exit(1);
+  }
 }
 
 const config = JSON.parse(readFileSync('deploy.config.json', 'utf8'));
