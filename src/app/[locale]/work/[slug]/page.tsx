@@ -3,15 +3,15 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { isLocale, localeHref, locales, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n';
+import { pageMetadata } from '@/lib/metadata';
 import { getProject, getNextProject, projects } from '@/content';
-import { site } from '@/lib/site';
 import { Section, SecHead, Sawtooth, Tag, Squiggle } from '@/components/ui/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { Button } from '@/components/ui/Button';
 import { FanCardArt } from '@/components/home/FanCardArt';
 import { BlockRenderer } from '@/components/case-study/Blocks';
 import { ChapterNav } from '@/components/case-study/ChapterNav';
-import { CreativeWorkSchema } from '@/components/seo/StructuredData';
+import { CaseStudySchema, BreadcrumbSchema } from '@/components/seo/StructuredData';
 
 export function generateStaticParams() {
   return locales.flatMap((locale) => projects.map((project) => ({ locale, slug: project.slug })));
@@ -27,48 +27,20 @@ export async function generateMetadata({
   const project = getProject(slug);
   if (!project) return {};
 
-  return {
+  /*
+   * `pageMetadata` carries the openGraph and twitter blocks that used to be
+   * spelled out here. They cannot be omitted: Next.js replaces the parent's
+   * `openGraph` object wholesale instead of merging into it, so a case study
+   * with no block of its own loses og:image entirely and announces the generic
+   * portfolio title when shared. That is also why the other five routes now go
+   * through the same helper — they were still inheriting the homepage's card.
+   */
+  return pageMetadata({
+    locale,
+    path: `work/${slug}`,
     title: project.seo.title[locale],
     description: project.seo.description[locale],
-    alternates: {
-      canonical: localeHref(locale, `work/${slug}`),
-      languages: {
-        en: `/en/work/${slug}`,
-        ar: `/ar/work/${slug}`,
-        'x-default': `/en/work/${slug}`,
-      },
-    },
-    /*
-     * `images` is repeated here rather than inherited: Next.js replaces the
-     * parent's `openGraph` object wholesale instead of merging into it, so
-     * omitting it drops og:image from every case study. Facebook, LinkedIn,
-     * WhatsApp and Slack all read og:image — those shares rendered with no
-     * card image at all until this was set.
-     */
-    openGraph: {
-      type: 'article',
-      title: project.seo.title[locale],
-      description: project.seo.description[locale],
-      url: `${site.url}${localeHref(locale, `work/${slug}`)}`,
-      locale: locale === 'ar' ? 'ar_IQ' : 'en_US',
-      images: [
-        { url: '/img/og.png', width: 1200, height: 630, alt: project.seo.title[locale] },
-      ],
-    },
-    /*
-     * Same reason, and the same trap in the other direction: with no `twitter`
-     * block the page inherited the site-wide default, so a shared case study
-     * announced the generic portfolio title instead of its own.
-     */
-    twitter: {
-      card: 'summary_large_image',
-      title: project.seo.title[locale],
-      description: project.seo.description[locale],
-      images: [
-        { url: '/img/og.png', width: 1200, height: 630, alt: project.seo.title[locale] },
-      ],
-    },
-  };
+  });
 }
 
 /**
@@ -99,7 +71,14 @@ export default async function CaseStudyPage({
 
   return (
     <div style={{ ['--accent' as string]: project.accent }}>
-      <CreativeWorkSchema project={project} locale={locale} />
+      <CaseStudySchema project={project} locale={locale} />
+      <BreadcrumbSchema
+        locale={locale}
+        trail={[
+          { name: dict.nav.work, path: 'work' },
+          { name: project.titleLocalized[locale], path: `work/${project.slug}` },
+        ]}
+      />
 
       {/* --------------------------------------------------------- Hero */}
       <header className="relative grain bg-bg-alt px-[var(--pad-x)] pb-0 pt-[clamp(120px,15vh,168px)]">
@@ -177,6 +156,43 @@ export default async function CaseStudyPage({
                 </li>
               ))}
             </ul>
+          </Reveal>
+
+          {/*
+            Every project already carried a `services` array in its content and
+            nothing rendered it, so the case studies — by far the most
+            substantial pages on the site — had no link to /services at all.
+            Traffic could arrive at a detailed write-up of the exact work
+            somebody wanted to buy and find no path to the page that sells it,
+            only prev/next and the footer. This is that path, and it is also
+            what tells a crawler which studies support which service.
+          */}
+          <Reveal delay={280} className="mt-8">
+            <h2 className="text-[13px] font-semibold text-ink-3">{dict.caseStudy.services}</h2>
+            <ul role="list" className="mt-3 flex flex-wrap gap-2">
+              {project.services.map((service) => (
+                <li key={service.en}>
+                  <Link
+                    href={localeHref(locale, 'services')}
+                    className="block rounded-pill bg-surface px-3 py-1.5 text-[13px] font-medium text-ink-2 transition-colors duration-[var(--dur-link)] hover:bg-ink hover:text-bg"
+                  >
+                    {service[locale]}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+
+          <Reveal delay={320} className="mt-8">
+            <Link
+              href={localeHref(locale, 'work')}
+              className="text-[13px] font-semibold text-accent underline-offset-4 hover:underline"
+            >
+              <span aria-hidden="true" className="rtl:-scale-x-100">
+                ←
+              </span>{' '}
+              {dict.common.backToWork}
+            </Link>
           </Reveal>
         </div>
       </Section>

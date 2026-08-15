@@ -1,13 +1,15 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { isLocale, localeHref, locales, type Locale } from '@/i18n/config';
+import { isLocale, locales, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n';
+import { pageMetadata } from '@/lib/metadata';
 import { site, socialLinks } from '@/lib/site';
 import { Section, SecHead, Sawtooth } from '@/components/ui/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { WavyLink } from '@/components/ui/Button';
 import { ContactForm } from '@/components/contact/ContactForm';
 import { LocalTime } from '@/components/layout/LocalTime';
+import { BreadcrumbSchema } from '@/components/seo/StructuredData';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -22,14 +24,12 @@ export async function generateMetadata({
   if (!isLocale(locale)) return {};
   const dict = getDictionary(locale);
 
-  return {
+  return pageMetadata({
+    locale,
+    path: 'contact',
     title: dict.contact.title,
     description: dict.contact.support,
-    alternates: {
-      canonical: localeHref(locale, 'contact'),
-      languages: { en: '/en/contact', ar: '/ar/contact', 'x-default': '/en/contact' },
-    },
-  };
+  });
 }
 
 export default async function ContactPage({
@@ -45,10 +45,12 @@ export default async function ContactPage({
 
   return (
     <>
+      <BreadcrumbSchema locale={locale} trail={[{ name: dict.nav.contact, path: 'contact' }]} />
+
       <div className="pt-[clamp(120px,15vh,168px)]" />
 
       <Section tone="alt" grain>
-        <SecHead title={dict.home.contact.title} intro={dict.contact.support} />
+        <SecHead as="h1" title={dict.home.contact.title} intro={dict.contact.support} />
 
         <Reveal className="mx-auto mt-8 max-w-[700px] text-center" delay={160}>
           <p className="text-[17px] leading-[1.8] text-ink-2">

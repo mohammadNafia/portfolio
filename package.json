@@ -5,7 +5,9 @@
   "description": "Bilingual portfolio for Mohammed Nafia — Full-Stack Software Engineer and Product Founder, Baghdad, Iraq.",
   "scripts": {
     "dev": "next dev -p 3210",
+    "prebuild": "node scripts/content-lastmod.mjs",
     "build": "next build",
+    "lastmod": "node scripts/content-lastmod.mjs",
     "start": "next start -p 3210",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

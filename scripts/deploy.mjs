@@ -105,6 +105,16 @@ const run = (args) =>
 
 try {
   /*
+   * Refresh the sitemap's `lastmod` dates from git before building.
+   *
+   * This has to happen here rather than in an npm `prebuild` hook, because the
+   * build below is `opennextjs-cloudflare build` invoked directly — npm
+   * lifecycle scripts never fire for it. The `prebuild` hook in package.json
+   * covers a plain `npm run build`; this covers every real deploy.
+   */
+  execFileSync(process.execPath, ['scripts/content-lastmod.mjs'], { stdio: 'inherit' });
+
+  /*
    * `build` then `deploy` as separate steps. `deploy` does not build — it
    * expects a compiled `.open-next` to already exist and fails outright
    * without one, which is why the clean above must be paired with an

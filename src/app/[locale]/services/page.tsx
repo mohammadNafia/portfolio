@@ -2,10 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { isLocale, localeHref, locales, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n';
+import { pageMetadata } from '@/lib/metadata';
 import { projects } from '@/content';
 import { Section, SecHead, Sawtooth, Tag } from '@/components/ui/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { Button, QuietLink } from '@/components/ui/Button';
+import { BreadcrumbSchema } from '@/components/seo/StructuredData';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -20,14 +22,12 @@ export async function generateMetadata({
   if (!isLocale(locale)) return {};
   const dict = getDictionary(locale);
 
-  return {
+  return pageMetadata({
+    locale,
+    path: 'services',
     title: dict.services.title,
     description: dict.services.support,
-    alternates: {
-      canonical: localeHref(locale, 'services'),
-      languages: { en: '/en/services', ar: '/ar/services', 'x-default': '/en/services' },
-    },
-  };
+  });
 }
 
 /** Each service links to the project that proves it — never a borrowed one. */
@@ -54,10 +54,12 @@ export default async function ServicesPage({
 
   return (
     <>
+      <BreadcrumbSchema locale={locale} trail={[{ name: dict.nav.services, path: 'services' }]} />
+
       <div className="pt-[clamp(120px,15vh,168px)]" />
 
       <Section tone="alt" grain>
-        <SecHead title={dict.nav.services} intro={services.support} />
+        <SecHead as="h1" title={dict.nav.services} intro={services.support} />
       </Section>
       <Sawtooth tone="bg" />
 
@@ -78,9 +80,15 @@ export default async function ServicesPage({
                     <span className="pixel-title block !text-[22px] !text-start text-accent">
                       {String(index + 1).padStart(2, '0')}
                     </span>
-                    <h3 className="mt-3 text-[clamp(20px,2vw,25px)] font-semibold leading-tight text-ink">
+                    {/*
+                      One level below the page `h1`. These were `h3` back when
+                      the page opened at `h2` and had no `h1` at all; with the
+                      real `h1` in place they are the page's top-level sections,
+                      and their sub-labels drop from `h4` to `h3` to match.
+                    */}
+                    <h2 className="mt-3 text-[clamp(20px,2vw,25px)] font-semibold leading-tight text-ink">
                       {service.title}
-                    </h3>
+                    </h2>
                     <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
                       <span className="font-semibold text-ink">{services.forWhom}: </span>
                       {service.forWhom}
@@ -89,13 +97,13 @@ export default async function ServicesPage({
 
                   <div className="flex flex-col gap-5">
                     <div>
-                      <h4 className="text-[13px] font-semibold text-ink-3">{services.solves}</h4>
+                      <h3 className="text-[13px] font-semibold text-ink-3">{services.solves}</h3>
                       <p className="mt-2 text-[15px] leading-relaxed text-ink-2">
                         {service.solves}
                       </p>
                     </div>
                     <div>
-                      <h4 className="text-[13px] font-semibold text-ink-3">{services.howIWork}</h4>
+                      <h3 className="text-[13px] font-semibold text-ink-3">{services.howIWork}</h3>
                       <p className="mt-2 text-[15px] leading-relaxed text-ink-2">
                         {service.howIWork}
                       </p>
@@ -104,9 +112,9 @@ export default async function ServicesPage({
 
                   <div className="flex flex-col gap-5">
                     <div>
-                      <h4 className="text-[13px] font-semibold text-ink-3">
+                      <h3 className="text-[13px] font-semibold text-ink-3">
                         {services.deliverables}
-                      </h4>
+                      </h3>
                       <ul role="list" className="mt-2 flex flex-col gap-2">
                         {service.deliverables.map((item) => (
                           <li
@@ -125,7 +133,7 @@ export default async function ServicesPage({
 
                     {proof ? (
                       <div>
-                        <h4 className="text-[13px] font-semibold text-ink-3">{services.proof}</h4>
+                        <h3 className="text-[13px] font-semibold text-ink-3">{services.proof}</h3>
                         <div className="mt-2 flex flex-wrap items-center gap-3">
                           <Tag brand={proof.accent}>{dict.classification[proof.classification]}</Tag>
                           <QuietLink href={localeHref(locale, `work/${proof.slug}`)}>

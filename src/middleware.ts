@@ -4,6 +4,29 @@ import { locales, defaultLocale, LOCALE_COOKIE, isLocale, type Locale } from '@/
 const PUBLIC_FILE = /\.[^/]+$/;
 
 /**
+ * The one host allowed to be indexed.
+ *
+ * `wrangler.jsonc` deliberately keeps `workers_dev: true` on production so a
+ * deploy stays verifiable while DNS settles, which means the whole site is also
+ * live at `portfolio-production.…workers.dev`. Canonical tags alone are a hint,
+ * not a directive — Google is free to ignore one and index the duplicate — so
+ * any host that is not the canonical one gets a hard `noindex` header instead.
+ * The apex is unaffected and the fallback URL stays usable for humans.
+ */
+const CANONICAL_HOST = new URL(
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mohammednafia.com',
+).host;
+
+/** `noindex` for every host but the canonical one. Mutates and returns `response`. */
+function guardHost(request: NextRequest, response: NextResponse): NextResponse {
+  const host = request.headers.get('host');
+  if (host && host !== CANONICAL_HOST) {
+    response.headers.set('x-robots-tag', 'noindex, nofollow');
+  }
+  return response;
+}
+
+/**
  * Every URL is normalised into a locale segment, so `/work` lands on
  * `/en/work` and an unknown path still renders the localised 404 rather than an
  * unstyled default document.
@@ -43,7 +66,7 @@ export function middleware(request: NextRequest) {
     pathname === '/favicon.ico' ||
     PUBLIC_FILE.test(pathname)
   ) {
-    return NextResponse.next();
+    return guardHost(request, NextResponse.next());
   }
 
   const segments = pathname.split('/').filter(Boolean);
@@ -59,13 +82,29 @@ export function middleware(request: NextRequest) {
         sameSite: 'lax',
       });
     }
-    return response;
+    /*
+     * The locale is chosen per request from a cookie and Accept-Language, so
+     * the response body varies by both. Without this, a shared cache — the
+     * Cloudflare edge included — can serve an Arabic document to an English
+     * visitor, or hand a crawler whichever copy happened to be cached first.
+     */
+    response.headers.append('vary', 'accept-language, cookie');
+    return guardHost(request, response);
   }
 
   const locale = resolveLocale(request);
   const url = request.nextUrl.clone();
   url.pathname = `/${locale}${pathname === '/' ? '' : pathname}`;
-  return NextResponse.redirect(url);
+
+  /*
+   * 307 rather than 308: which locale `/` resolves to genuinely depends on the
+   * visitor, so the redirect is not permanent and must not be cached as though
+   * it were. `Vary` is what stops the edge caching one visitor's answer for
+   * everyone.
+   */
+  const redirect = NextResponse.redirect(url, 307);
+  redirect.headers.append('vary', 'accept-language, cookie');
+  return guardHost(request, redirect);
 }
 
 /**
