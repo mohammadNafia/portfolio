@@ -7,7 +7,7 @@ import { Section, SecHead, Tag } from '../ui/Section';
 import { Reveal } from '../ui/Reveal';
 import { Button } from '../ui/Button';
 import { FanCardArt } from './FanCardArt';
-import { GalleryZoom } from './GalleryZoom';
+import { SettleGrid } from './SettleGrid';
 import { Carousel, type CarouselItem } from './Carousel';
 import { ContactForm } from '../contact/ContactForm';
 
@@ -48,14 +48,16 @@ function Arrow() {
  * This is also the panel that climbs over the hero, so it owns its own sawtooth
  * and carries `.after-hero` — see motion.md → "Hero overlay scroll".
  *
- * One card does the scroll-linked zoom-out reveal instead of the blur-up — see
- * `GalleryZoom` and `assets/gallery-zoom-reveal.md`. Exactly one per grid: two
- * of them fight for z-index and read as a glitch. Index 2 rather than 0, because
- * the first row is drawn while the hero is still on screen, lagging at 0.2×
- * under a sawtooth — two signature moves colliding in the same 400px of scroll.
+ * Every tile keeps the site's one entrance, the `Reveal` blur-up, and the grid
+ * adds the settling-weight move on top of it — see `SettleGrid` for what that
+ * is and, more to the point, for why it is built out of bounded constants
+ * rather than tuned magnitudes. The two compose because they touch different
+ * properties on different elements: `Reveal` owns opacity and blur on the
+ * `<li>`, the settle owns transform on the element inside it.
+ *
+ * This slot previously held a scroll-linked zoom-out, which was removed rather
+ * than tuned a fifth time.
  */
-const ZOOM_INDEX = 2;
-
 export function SelectedWork({
   projects,
   locale,
@@ -68,45 +70,45 @@ export function SelectedWork({
   const { work } = dict.home;
 
   return (
-    <Section id="work" tone="bg" wide sawtooth="bg" className="after-hero gallery-panel">
+    <Section id="work" tone="bg" wide sawtooth="bg" className="after-hero">
       <SecHead title={work.title} intro={work.intro} />
 
-      <ul role="list" className="gallery gallery--work mt-16">
+      <SettleGrid className="gallery gallery--work mt-16">
         {work.items.map((item, index) => {
           const slug = WORK_SLUGS[index]!;
           const project = projects.find((candidate) => candidate.slug === slug)!;
 
-          const card = (
-            <Link
-              href={localeHref(locale, `work/${slug}`)}
-              className="case-card block h-full"
-              aria-label={`${item.title} — ${item.cta}`}
-            >
-              <span className="case-card__cover" aria-hidden="true">
-                <FanCardArt project={project} />
-              </span>
-              <span className="case-card__body">
-                <span className="case-card__title">{item.title}</span>
-                <span className="case-card__sub">{item.subtitle}</span>
-                <span className="case-card__text">{item.text}</span>
-                <span className="case-card__cta">
-                  {item.cta}
-                  <Arrow />
-                </span>
-              </span>
-            </Link>
-          );
-
-          /* The zoom is this card's entrance, so it does not also blur up. */
-          return index === ZOOM_INDEX ? (
-            <GalleryZoom key={slug}>{card}</GalleryZoom>
-          ) : (
+          return (
             <Reveal key={slug} as="li" delay={index * 80} className="gallery__item">
-              {card}
+              {/*
+                The settle's transform goes here, not on the `<li>` — the cell
+                itself must never transform, or the grid tracks resolve off a
+                moving box. `data-settle` is what `SettleGrid` collects.
+              */}
+              <div className="settle__inner" data-settle>
+                <Link
+                  href={localeHref(locale, `work/${slug}`)}
+                  className="case-card block h-full"
+                  aria-label={`${item.title} — ${item.cta}`}
+                >
+                  <span className="case-card__cover" aria-hidden="true">
+                    <FanCardArt project={project} />
+                  </span>
+                  <span className="case-card__body">
+                    <span className="case-card__title">{item.title}</span>
+                    <span className="case-card__sub">{item.subtitle}</span>
+                    <span className="case-card__text">{item.text}</span>
+                    <span className="case-card__cta">
+                      {item.cta}
+                      <Arrow />
+                    </span>
+                  </span>
+                </Link>
+              </div>
             </Reveal>
           );
         })}
-      </ul>
+      </SettleGrid>
     </Section>
   );
 }

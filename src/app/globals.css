@@ -970,99 +970,43 @@
    * measures. The cell is a bare slot — the card inside it is the site's
    * `.case-card`, the same one the work index and the archive use.
    */
+  /*
+   * No `isolation: isolate` and no stacking games: every cell is an ordinary
+   * grid item drawn in flow. A tile used to be lifted out of the grid on an
+   * unbounded transform, which is what made the isolation, the escape hatches
+   * and the per-cell overflow overrides necessary. All of it went with it, and
+   * the settle below deliberately does not bring any of it back.
+   */
   .gallery {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: var(--gap-grid);
-    /* Contains the featured tile's z-index bump. */
-    isolation: isolate;
   }
 
   .gallery__item {
     position: relative;
   }
 
-  /* ---- Gallery zoom-out reveal ----------------------------------------- */
+  /* ---- Settling-weight entrance ---------------------------------------- */
   /*
-   * A phone tile is already viewport-wide, so the spec's narrow-viewport scale
-   * of 1.4 can only bleed off both edges — intended, but it grew the document's
-   * scrollable width by 47px at 390 and 430, and the site holds a hard rule that
-   * no page scrolls sideways at any width.
+   * `SettleGrid` writes `--settle-y` and `--settle-s` every frame; these
+   * identity defaults are what the cells render at before hydration, without
+   * JS, once the grid has landed, and under reduced motion. The effect is
+   * therefore additive to a page that is already correct without it.
    *
-   * Clipping one axis satisfies both: the bleed is drawn and then cut at the
-   * viewport edges, and never reaches the document's scroll area. It must be
-   * `clip` and not `hidden` — `hidden` would make this section a scroll
-   * container on the other axis too and swallow the oversized card whole.
+   * The bounds are the design, not a tuning: at most 8px down into a 22px grid
+   * gap and at most 1.5% inward. Nothing can reach outside its own cell, which
+   * is why this section needs no overflow rule, no z-index and no isolation.
    */
-  .gallery-panel {
-    overflow-x: clip;
-    overflow-y: visible;
-  }
-
-  /*
-   * One tile enters oversized and blurred, floating over the grid, and shrinks
-   * into its own cell as you scroll. Scroll-linked: `GalleryZoom` writes
-   * `--zoom-*` every frame, and the identity defaults below keep the tile
-   * ordinary before hydration, without JS, and under reduced motion.
-   *
-   * The wrapper stays put and reserves the slot at its natural size, so nothing
-   * in the grid reflows; the inner element carries the fill, the radius and the
-   * transform. Never move the transform onto the cell itself.
-   */
-  .gallery__item--featured {
-    z-index: 5;
-    /* The oversized card has to escape its cell — and its cell must not show. */
-    overflow: visible;
-    background: none;
-    /*
-     * ...and `overflow: visible` is exactly what un-does the automatic minimum
-     * size, so this has to be restored by hand.
-     *
-     * A grid item that is not a scroll container resolves `min-width: auto` to
-     * its min-content width, and because this tile also carries an
-     * `aspect-ratio`, that minimum is *transferred from its content height* —
-     * which is far wider than a column. At every two-column width the track it
-     * sits in took the whole row: 1080 resolved to `107px 855px`, 1024 to
-     * `101px 805px`, 768 to `74px 595px`. The other column is the narrow one,
-     * which is what this reads as on screen.
-     *
-     * The three-column layout never showed it — the featured cell is in column
-     * one there and 1440/1280 resolve to equal tracks — so this survived every
-     * desktop screenshot. `overflow: hidden` also fixes the tracks and is not an
-     * option: it clips the oversized card, which is the whole effect.
-     *
-     * Both axes, and `min-height` is not the redundant half of the pair. The
-     * transferred minimum runs *from* the content height, so leaving the height
-     * free lets the row grow, `aspect-ratio` derives a width back off it, and
-     * the tile renders wider than the track it was just pinned into — which is
-     * a card hanging out of the viewport rather than a blown-out column, so the
-     * track assertions stay green while the overflow one fails.
-     */
-    min-width: 0;
-    min-height: 0;
-  }
-
-  /*
-   * No fill and no clipping of its own any more: the card inside carries the
-   * radius, the background and the overflow. A surface fill here showed at the
-   * corners, where the wrapper's radius and the card's disagree by 6px.
-   */
-  .zoom__inner {
+  .settle__inner {
     height: 100%;
     transform-origin: center center;
-    transform: translate3d(var(--zoom-dx, 0px), var(--zoom-dy, 0px), 0) scale(var(--zoom-s, 1));
-    filter: blur(var(--zoom-blur, 0px));
-    will-change: transform, filter;
+    transform: translate3d(0, var(--settle-y, 0px), 0) scale(var(--settle-s, 1));
   }
 
-  /*
-   * Hover belongs to the landed state only. A mouse resting where the oversized
-   * card is drawn would otherwise lift and shadow a card that is still flying,
-   * and the whole move reads as a bug. Gating the pointer on the inner element
-   * covers the cell too: it has no other content to hover.
-   */
-  .gallery__item--featured[data-zoom-active] .zoom__inner {
-    pointer-events: none;
+  /* Only while something is actually moving — see the note in `SettleGrid`. */
+  .gallery[data-settling] .settle__inner {
+    will-change: transform;
   }
 
   /* ---- Feature / stat cards -------------------------------------------- */
@@ -1962,14 +1906,12 @@
   }
 
   /*
-   * The featured gallery tile renders at its natural size and position, sharp,
-   * from the first paint. Nothing is lost but the motion. `GalleryZoom` also
-   * clears the properties it had written, so this only has to cover the case
-   * where the preference is set before the script runs.
+   * The selected-work cells sit at their resting position from the first
+   * paint. `SettleGrid` also declines to start its loop, so this only has to
+   * cover the case where the preference is set before the script runs.
    */
-  .zoom__inner {
+  .settle__inner {
     transform: none;
-    filter: none;
   }
 
   /* The fan settles straight into its resting position, with no float. */
