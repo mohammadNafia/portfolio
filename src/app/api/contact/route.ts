@@ -55,9 +55,16 @@ export async function POST(request: Request): Promise<NextResponse<ContactRespon
         to: [to],
         reply_to: data.email,
         subject: `New project inquiry — ${data.name}${data.company ? ` (${data.company})` : ''}`,
+        /* So a reply from the phone still threads back to the sender. */
         text: [
           `Name: ${data.name}`,
           `Email: ${data.email}`,
+          /*
+           * Required, so it is never conditional — an inquiry that reached
+           * here has one. Kept directly under the email so both ways of
+           * replying sit together at the top of the message.
+           */
+          `Phone: ${data.phone}`,
           data.company ? `Company: ${data.company}` : null,
           `Service: ${data.service}`,
           data.timeline ? `Timeline: ${data.timeline}` : null,

@@ -48,6 +48,7 @@ export function ContactForm({
     const payload = {
       name: String(data.get('name') ?? ''),
       email: String(data.get('email') ?? ''),
+      phone: String(data.get('phone') ?? ''),
       company: String(data.get('company') ?? ''),
       service: String(data.get('service') ?? ''),
       summary: String(data.get('summary') ?? ''),
@@ -102,18 +103,62 @@ export function ContactForm({
     statusRef.current?.focus();
   }
 
+  /*
+   * Success is the one state on this form that carries colour, and only this
+   * one — the failure paths below stay deliberately colourless.
+   *
+   * The system has no red token and forbids adding one, so errors do their work
+   * with bold ink and a neutral ring. That rule is about not encoding failure
+   * in a hue nobody can see. Success is the opposite case: it is not a warning
+   * anybody has to act on, it needs to be distinguishable at a glance from the
+   * neutral notice it used to look like, and the accent is already the site's
+   * one affirmative colour.
+   *
+   * Contrast is checked, not assumed. `--accent` is the TEXT half of the split
+   * accent (see globals.css) and measures 5.25:1 on white; on the 6% tint below
+   * it is 5.0:1, still past AA for the 15px body. `--accent-bright` is the
+   * text-free half, so it is used for the disc and nothing else. And the state
+   * is not carried by colour alone — the heading says it, the tick draws it,
+   * and `role="status"` announces it.
+   */
   if (state === 'success') {
     return (
       <div
         ref={statusRef}
         tabIndex={-1}
         role="status"
-        className="rounded-card bg-surface p-8 text-center"
+        className="rounded-card p-8 text-center"
+        style={{
+          background: 'color-mix(in srgb, var(--color-accent) 6%, #ffffff)',
+        }}
       >
-        <h3 className="pixel-title !text-[26px]">{s.successTitle}</h3>
-        <p className="mx-auto mt-4 max-w-[46ch] text-[15px] leading-relaxed text-ink-2">
+        <span
+          aria-hidden="true"
+          className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill"
+          style={{ background: 'var(--color-accent-bright)' }}
+        >
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden="true">
+            <path
+              d="M5 12.5l4.5 4.5L19 7.5"
+              stroke="#ffffff"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+
+        <h3 className="pixel-title !text-[26px] mt-5" style={{ color: 'var(--color-accent)' }}>
+          {s.successTitle}
+        </h3>
+
+        <p
+          className="mx-auto mt-3 max-w-[46ch] text-[15px] leading-relaxed"
+          style={{ color: 'var(--color-accent)' }}
+        >
           {s.successText}
         </p>
+
         <div className="mt-6 flex justify-center">
           <Button variant="dark" onClick={() => setState('idle')}>
             {s.successAgain}
@@ -172,6 +217,27 @@ export function ContactForm({
         placeholder={f.emailPlaceholder}
         error={messageFor(errors['email'])}
         autoComplete="email"
+        ltr
+        required
+      />
+
+      {/*
+        `ltr` on an Arabic page is not cosmetic. A number typed as
+        "+964 770 123 4567" in an RTL context has its leading `+` reordered to
+        the visual right by the bidi algorithm, so the field shows a number
+        that reads as a different one — and the `+` looks like it belongs to
+        whatever follows. The island pins the whole value to LTR, which is how
+        phone numbers are written in Arabic text anyway.
+      */}
+      <Field
+        id={`${baseId}-phone`}
+        name="phone"
+        type="tel"
+        inputMode="tel"
+        label={f.phone}
+        placeholder={f.phonePlaceholder}
+        error={messageFor(errors['phone'])}
+        autoComplete="tel"
         ltr
         required
       />
@@ -291,6 +357,7 @@ function Field({
   hint,
   placeholder,
   type = 'text',
+  inputMode,
   error,
   multiline,
   autoComplete,
@@ -303,6 +370,7 @@ function Field({
   hint?: string;
   placeholder?: string;
   type?: string;
+  inputMode?: 'tel' | 'email' | 'text' | 'numeric';
   error?: string;
   multiline?: boolean;
   autoComplete?: string;
@@ -314,10 +382,18 @@ function Field({
     name,
     placeholder,
     autoComplete,
+    inputMode,
     'aria-required': required || undefined,
     'aria-invalid': error ? (true as const) : undefined,
     'aria-describedby': error ? `${id}-error` : undefined,
     className: ltr ? 'ltr-island' : undefined,
+    /*
+     * `dir` as well as the class. `.ltr-island` sets direction for rendering,
+     * but a text input also needs the attribute for the CARET and for how the
+     * browser orders characters as they are typed — without it the first
+     * keystroke in an RTL document still lands right-to-left.
+     */
+    dir: ltr ? ('ltr' as const) : undefined,
   };
 
   return (

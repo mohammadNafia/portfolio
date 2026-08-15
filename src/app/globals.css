@@ -1084,42 +1084,14 @@
     margin-bottom: 0;
   }
 
-  /* ---- Prose beside a portrait ------------------------------------------ */
-  .split {
-    display: grid;
-    gap: clamp(32px, 5vw, 64px);
-    align-items: start;
-  }
-
-  @media (min-width: 961px) {
-    .split {
-      grid-template-columns: minmax(0, 1fr) clamp(240px, 26vw, 320px);
-    }
-  }
-
   /*
-   * IMAGE SLOT — empty `--surface` block at 3:4, waiting on a portrait. The
-   * manifest rule is that a missing file gets a surface block at the right
-   * ratio, never a stretched stand-in. Below 961px it would be a large grey
-   * rectangle between two halves of a sentence, so it is dropped rather than
-   * stacked.
+   * `.split`, `.split__aside` and `.portrait-slot` were removed with the
+   * Background section's side column. The slot was an empty 3:4 `--surface`
+   * block reserved for a photograph that was never supplied, and it was already
+   * hidden below 961px — so on every phone the section was centred prose and on
+   * a desktop it was prose pushed left by a grey rectangle. Centring it in both
+   * places is one rule instead of three, and nothing else on the site used them.
    */
-  .portrait-slot {
-    aspect-ratio: 3 / 4;
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-  }
-
-  @media (max-width: 960px) {
-    .split__aside {
-      display: none;
-    }
-
-    /* With the portrait gone the measure has the row to itself — centre it. */
-    .split .prose-block {
-      margin-inline: auto;
-    }
-  }
 
   /* ---- How I work ------------------------------------------------------- */
   .steps {
@@ -1303,7 +1275,9 @@
     }
   }
 
+  /* `position: relative` for the same reason as `.case-card__cover`. */
   .case-row__media {
+    position: relative;
     display: flex;
     aspect-ratio: 4 / 3;
     overflow: hidden;
@@ -1485,9 +1459,18 @@
     box-shadow: var(--shadow-hover);
   }
 
+  /*
+   * `position: relative` because the cover now holds a `next/image` with
+   * `fill`, which positions against the nearest positioned ancestor — without
+   * it the image escapes to the page and covers the viewport. `display: flex`
+   * stays for the coded `FanCardArt` fallback, which is a flow child rather
+   * than an absolutely positioned one.
+   */
   .case-card__cover {
+    position: relative;
     aspect-ratio: 4 / 3;
     display: flex;
+    overflow: hidden;
   }
 
   .case-card__body {

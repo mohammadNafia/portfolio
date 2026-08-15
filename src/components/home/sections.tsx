@@ -6,7 +6,7 @@ import { site } from '@/lib/site';
 import { Section, SecHead, Tag } from '../ui/Section';
 import { Reveal } from '../ui/Reveal';
 import { Button } from '../ui/Button';
-import { FanCardArt } from './FanCardArt';
+import { CardCover } from './CardCover';
 import { SettleGrid } from './SettleGrid';
 import { Carousel, type CarouselItem } from './Carousel';
 import { ContactForm } from '../contact/ContactForm';
@@ -96,8 +96,8 @@ export function SelectedWork({
                   className="case-card block h-full"
                   aria-label={`${item.title} — ${item.cta}`}
                 >
-                  <span className="case-card__cover" aria-hidden="true">
-                    <FanCardArt project={project} />
+                  <span className="case-card__cover">
+                    <CardCover project={project} locale={locale} priority={index < 2} />
                   </span>
                   <span className="case-card__body">
                     <span className="case-card__title">{item.title}</span>
@@ -121,17 +121,19 @@ export function SelectedWork({
 /* --------------------------------------------------------------- Background */
 
 /**
- * The longest prose on the page, so it runs in a reading measure rather than
- * centred, with a portrait slot beside it for relief.
+ * The longest prose on the page, centred on a single axis — no side column, no
+ * offset measure, nothing asymmetric.
  *
- * IMAGE SLOT — `.portrait-slot` is an empty `--surface` block at 3:4. No
- * photograph has been supplied for it; it is listed in the handover notes.
- * Drop a file in and replace the block, do not stretch an existing asset into
- * it.
+ * The empty portrait slot that used to sit beside it is gone rather than
+ * waiting. It was a 3:4 `--surface` rectangle standing in for a photograph
+ * nobody had supplied, and an empty grey block beside a paragraph does not read
+ * as a reserved space — it reads as an image that failed to load. Dropping it
+ * also removes the one place on the page where the copy ran to one side. If a
+ * portrait ever arrives it belongs above the prose, on the same axis as
+ * everything else here, not in a column of its own.
  *
- * The résumé download sits directly under the section, as a dark pill. It is a
- * plain `<a download>` at a static path — one click, straight to the file, no
- * intermediate page.
+ * The résumé download closes the section: its own line, centred, a dark pill.
+ * A plain `<a download>` at a static path — one click, straight to the file.
  */
 export function Background({ dict }: { dict: Dictionary }) {
   const { background } = dict.home;
@@ -140,22 +142,16 @@ export function Background({ dict }: { dict: Dictionary }) {
     <Section id="background" tone="alt" grain>
       <SecHead title={background.title} />
 
-      <div className="split mt-12">
-        <div className="prose-block">
-          <Reveal as="p" className="prose-block__lead" delay={80}>
-            {background.lead}
-          </Reveal>
-
-          {background.paragraphs.map((paragraph, index) => (
-            <Reveal key={index} as="p" className="prose-block__p" delay={140 + index * 60}>
-              {paragraph}
-            </Reveal>
-          ))}
-        </div>
-
-        <Reveal className="split__aside" delay={160}>
-          <div className="portrait-slot" aria-hidden="true" />
+      <div className="prose-block prose-block--centred mt-12">
+        <Reveal as="p" className="prose-block__lead" delay={80}>
+          {background.lead}
         </Reveal>
+
+        {background.paragraphs.map((paragraph, index) => (
+          <Reveal key={index} as="p" className="prose-block__p" delay={140 + index * 60}>
+            {paragraph}
+          </Reveal>
+        ))}
       </div>
 
       <Reveal className="mt-14 flex justify-center" delay={240}>
@@ -339,7 +335,18 @@ export function CaseStudies({
           return (
             <Reveal key={slug} as="article" className="case-row" delay={80}>
               <div className="case-row__media" data-flip={index % 2 === 1 ? 'true' : undefined}>
-                <FanCardArt project={project} />
+                {/*
+                  The fan composition here, the case-study hero up in Selected
+                  Work. All three of these projects appear in both sections, and
+                  showing the same photograph twice on one page is what makes
+                  the repetition read as padding rather than as depth.
+                */}
+                <CardCover
+                  project={project}
+                  locale={locale}
+                  prefer="fan"
+                  sizes="(max-width: 900px) 92vw, 560px"
+                />
               </div>
 
               <div className="case-row__body">
@@ -413,8 +420,25 @@ export function ArchiveStrip({
           className="case-card block h-full"
           aria-label={`${item.title} — ${item.cta}`}
         >
-          <span className="case-card__cover" aria-hidden="true">
-            <FanCardArt project={project} />
+          {/*
+            Fan art first here too. Al-Tafawuq is the one project that appears
+            in both Selected Work and the archive, and it has both images — so
+            the grid shows its dashboard export and the carousel shows its fan
+            composition rather than the same picture twice on one page.
+
+            The three projects with neither image (NANO, Form Builder,
+            MedicHub) fall through to the coded face, which is the right answer
+            rather than a gap: it is built from each project's own module names,
+            and borrowing a photograph of a different product to fill the slot
+            would be the one thing worse than an abstract one.
+          */}
+          <span className="case-card__cover">
+            <CardCover
+              project={project}
+              locale={locale}
+              prefer="fan"
+              sizes="(max-width: 760px) 82vw, 360px"
+            />
           </span>
 
           <span className="case-card__body">

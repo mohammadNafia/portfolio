@@ -5,9 +5,70 @@ import { z } from 'zod';
  * drift between them. Messages are keys resolved against the dictionary rather
  * than English strings, keeping validation feedback localised.
  */
+/**
+ * Characters a phone number is allowed to be written with. Digits, plus the
+ * punctuation people actually type: a leading `+`, spaces, dashes, dots and
+ * brackets around an area code.
+ *
+ * Deliberately no letters — this is what separates "+964 770 123 4567" from a
+ * sentence, and it is checked before the digit count so a visitor who typed
+ * prose into the wrong field gets told the field is wrong rather than that
+ * their number is too short.
+ */
+const PHONE_SHAPE = /^[+()\-.\s\d٠-٩۰-۹]+$/;
+
+/**
+ * Arabic-Indic (٠١٢٣٤٥٦٧٨٩, U+0660–0669) and the Persian/Urdu variant
+ * (۰۱۲۳۴۵۶۷۸۹, U+06F0–06F9) folded to ASCII before anything counts them.
+ *
+ * `\d` and `\D` match ASCII only, so without this an Arabic speaker typing
+ * their own number in their own numerals — on the Arabic half of a bilingual
+ * site aimed primarily at Iraq — has it rejected as "not a valid phone
+ * number". That is the single worst failure this form could have, and it would
+ * have been invisible to every test written in English.
+ *
+ * Folding is for VALIDATION only. The value posted and delivered is whatever
+ * the visitor typed, because a number is easier to read back in the script it
+ * was written in, and rewriting someone's input is not this field's job.
+ */
+const foldDigits = (value: string) =>
+  value.replace(/[٠-٩۰-۹]/g, (digit) => {
+    const code = digit.codePointAt(0)!;
+    const base = code >= 0x06f0 ? 0x06f0 : 0x0660;
+    return String(code - base);
+  });
+
+/** Digits only, for counting. Formatting is the visitor's business, not ours. */
+const digitsIn = (value: string) => foldDigits(value).replace(/\D/g, '');
+
+/**
+ * 7 to 15 digits.
+ *
+ * The upper bound is E.164's own maximum, so no real number in any country
+ * exceeds it. The lower bound is loose on purpose: the brief is that Iraqi
+ * numbers are the primary case and a visitor from outside Iraq must still be
+ * able to submit, which rules out validating against an Iraqi pattern. So the
+ * rule is "could this be a phone number anywhere" rather than "is this the
+ * shape I expect".
+ *
+ * Both Iraqi forms pass: 0770 123 4567 is 11 digits, +964 770 123 4567 is 13.
+ * So do +1 212 555 1234 (11) and +44 7911 123456 (12).
+ */
+const MIN_DIGITS = 7;
+const MAX_DIGITS = 15;
+
 export const contactSchema = z.object({
   name: z.string().trim().min(1, 'nameRequired'),
   email: z.string().trim().min(1, 'emailRequired').email('emailInvalid'),
+  phone: z
+    .string()
+    .trim()
+    .min(1, 'phoneRequired')
+    .refine((value) => PHONE_SHAPE.test(value), 'phoneInvalid')
+    .refine((value) => {
+      const digits = digitsIn(value);
+      return digits.length >= MIN_DIGITS && digits.length <= MAX_DIGITS;
+    }, 'phoneInvalid'),
   company: z.string().trim().max(120).optional().or(z.literal('')),
   service: z.string().trim().min(1, 'serviceRequired'),
   summary: z.string().trim().min(1, 'summaryRequired').min(20, 'summaryShort').max(4000),

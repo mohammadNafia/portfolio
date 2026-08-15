@@ -202,6 +202,8 @@ test.describe('contact form', () => {
     await page.goto('/en/contact');
     await page.getByLabel(/^Your name/).fill('Test Person');
     await page.getByLabel(/^Email/).fill('test@example.com');
+    /* Required since the phone field landed — without it this never posts. */
+    await page.getByLabel(/^Phone number/).fill('+964 770 123 4567');
     await page.getByLabel(/^What do you need/).selectOption({ index: 1 });
     await page
       .getByLabel(/^Project summary/)
@@ -221,6 +223,7 @@ test.describe('contact form', () => {
     await page.goto('/en/contact');
     await page.getByLabel(/^Your name/).fill('Test');
     await page.getByLabel(/^Email/).fill('not-an-email');
+    await page.getByLabel(/^Phone number/).fill('+964 770 123 4567');
     await page.getByLabel(/^What do you need/).selectOption({ index: 1 });
     await page.getByLabel(/^Project summary/).fill('Another sufficiently long project description.');
     await page.getByRole('button', { name: /Send me a message/i }).click();
