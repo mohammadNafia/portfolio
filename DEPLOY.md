@@ -6,8 +6,15 @@ full `.next` build and export mode breaks it.
 
 | | branch | Worker | URL |
 |---|---|---|---|
-| **production** | `main` | `portfolio-production` | `portfolio-production.<subdomain>.workers.dev` |
-| **staging** | `develop` | `portfolio-staging` | `portfolio-staging.<subdomain>.workers.dev` |
+| **production** | `main` | `portfolio-production` | <https://mohammednafia.com> |
+| **staging** | `develop` | `portfolio-staging` | <https://portfolio-staging.mohammadnafia1.workers.dev> |
+
+Production also stays reachable at `portfolio-production.mohammadnafia1.workers.dev`.
+That is deliberate — it is the fallback used to verify a deploy before trusting
+DNS. Adding `routes` to a Wrangler environment silently flips `workers_dev` to
+`false`, which retires that URL; `"workers_dev": true` is set explicitly to stop
+that. It costs nothing in SEO, because every page carries a canonical pointing at
+the apex, so the workers.dev copy de-duplicates itself.
 
 Everything lands on `develop` first. `main` takes pull requests only, gated on
 the `verify` check in [`.github/workflows/e2e.yml`](.github/workflows/e2e.yml).
@@ -153,7 +160,7 @@ All three are read in [`src/app/api/contact/route.ts`](src/app/api/contact/route
 |---|---|---|---|
 | `RESEND_API_KEY` | production (staging to test) | **yes** | Without it, `POST /api/contact` returns `503 unavailable`. |
 | `CONTACT_TO_EMAIL` | both | no, but set as a secret | Inbox for inquiries. Defaults to the address in `src/lib/site.ts`. |
-| `CONTACT_FROM_EMAIL` | both | no, but set as a secret | Must be a domain verified with Resend. |
+| `CONTACT_FROM_EMAIL` | both | no, but set as a secret | A domain verified with Resend — **or** the interim `onboarding@resend.dev`, which carries the constraint below. |
 
 Set them as secrets — **never** in `wrangler.jsonc`, which is committed and public.
 
@@ -173,6 +180,40 @@ npx wrangler secret list --env production   # verify, without revealing values
 
 Repeat with `--env staging`. Secrets are per-Worker, so the two environments do
 not share them.
+
+#### The `onboarding@resend.dev` constraint — read this before changing an address
+
+No domain is verified with Resend yet, so the sender is Resend's shared testing
+address, `Portfolio <onboarding@resend.dev>`. It works, but it buys that by
+accepting a restriction that is easy to trip over months later:
+
+> **With the `resend.dev` sender, Resend delivers only to the email address that
+> owns the Resend account.** Anything else comes back `403 validation_error`.
+
+Which means the two settings below are **coupled**, and neither is free to move
+on its own:
+
+- the address that owns the Resend account, and
+- `CONTACT_TO_EMAIL` (defaulting to `site.email` in [`src/lib/site.ts`](src/lib/site.ts))
+
+Today both are `mohammadnafia1@gmail.com`, which is the only reason sending
+works. Point `CONTACT_TO_EMAIL` at a different inbox — a client address, a team
+alias, a forwarder — and every inquiry starts failing, while the form keeps
+looking fine to the visitor. The same applies in reverse if the Resend account
+is ever moved to another address.
+
+**Verifying a domain is what lifts this.** Once `mohammadnafia.com` (or a `send.`
+subdomain) is verified and `CONTACT_FROM_EMAIL` moves onto it, the recipient
+restriction disappears and `CONTACT_TO_EMAIL` becomes free to be any inbox. See
+[2. Resend sending domain](#2-resend-sending-domain). Until
+then, treat "the Resend account address" and "the inquiry inbox" as one value
+that happens to be written down in two places.
+
+Note that a failure here is **not** visible from the endpoint's response: a bad
+key and a refused recipient both surface as `502 {"status":"error"}`, and Resend
+returns `403` for both — only the `name` in its response body separates
+`invalid_api_key` from `validation_error`. The route logs that body verbatim, so
+`npx wrangler tail --env production` is the place to look.
 
 For local runtime testing, put them in `.dev.vars` (git-ignored, same
 `KEY=value` format as `.env`). `wrangler dev` does not read Worker secrets.
@@ -215,6 +256,59 @@ Workers & Pages → Create → Connect to Git → `mohammadNafia/portfolio`:
 - **Build command:** `npx opennextjs-cloudflare build`
 - **Deploy command:** `npx wrangler deploy --env production` (or `--env staging`)
 - **Build env vars:** `NEXT_PUBLIC_SITE_URL` per environment (see above)
+
+---
+
+## DNS — remaining manual steps
+
+The apex is live and was created by `wrangler deploy` from the `routes` entry in
+`wrangler.jsonc`. Two things still need doing by hand, because they need zone
+write access that the Wrangler OAuth token does not carry (it has `zone: read`).
+
+Do both in one sitting — there is no reason to touch DNS twice.
+
+### 1. `www` → apex redirect
+
+`www.mohammednafia.com` is currently **NXDOMAIN**. Deliberately not a second
+Custom Domain: two Custom Domains means two live hosts serving identical content.
+A redirect keeps exactly one indexable surface.
+
+1. **DNS → Records → Add**: `AAAA`, name `www`, value `100::`, **Proxied
+   (orange)**. A discard-prefix placeholder; the proxy intercepts it, so nothing
+   is ever routed there.
+2. **Rules → Redirect Rules → Create**:
+   - If: `Hostname equals www.mohammednafia.com`
+   - Then: Dynamic redirect to `concat("https://mohammednafia.com", http.request.uri.path)`
+   - Status **301**, preserve query string.
+
+Redirect Rules run at the edge before the Worker, so this costs nothing and does
+not count against Worker requests.
+
+### 2. Resend sending domain
+
+Verify **`send.mohammednafia.com`**, not the apex. Resend recommends a subdomain,
+and apex verification would put MX on the root and break any existing mail on
+`mohammednafia.com`.
+
+All three are **DNS only (grey cloud)** — they cannot collide with the proxied
+apex. Copy the values Resend shows *without* the domain suffix (`send`, not
+`send.mohammednafia.com`):
+
+| Type | Name | Proxy | Value |
+|---|---|---|---|
+| MX | `send` | DNS only | `feedback-smtp.<region>.amazonses.com`, priority 10 |
+| TXT | `send` | DNS only | `v=spf1 include:amazonses.com ~all` |
+| TXT | `resend._domainkey` | DNS only | the DKIM key Resend shows, starts `p=` |
+
+Then set the secrets (see [Environment variables](#environment-variables)):
+
+```bash
+npx wrangler secret put RESEND_API_KEY     --env production
+npx wrangler secret put CONTACT_FROM_EMAIL --env production   # Portfolio <hello@send.mohammednafia.com>
+```
+
+`CONTACT_FROM_EMAIL` must be on the verified domain or Resend rejects the send.
+The visitor still gets replies at their own address — the route sets `reply_to`.
 
 ---
 

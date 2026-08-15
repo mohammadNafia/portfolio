@@ -43,6 +43,7 @@ export const en = {
     linkedin: 'LinkedIn',
     github: 'GitHub',
     interfaceConcept: 'Interface concept',
+    nextCard: 'Next card',
   },
 
   /*
@@ -88,193 +89,272 @@ export const en = {
     experiment: 'Experiment',
   },
 
+  /*
+   * The home page is a single authored document, supplied as final copy in both
+   * locales. Nothing here is a translation of the other side: the two were
+   * written separately, which is why several prose arrays differ in length
+   * between `en` and `ar` — the same argument, split into a different number of
+   * paragraphs. `tests/unit/content.test.ts` lists those paths explicitly.
+   *
+   * Section titles are stored in their authored casing. The display face
+   * uppercases Latin headings in CSS and leaves Arabic alone, so storing
+   * SHOUTING here would only make the source harder to proof-read against the
+   * copy document.
+   */
   home: {
     hero: {
-      eyebrow: 'FULL-STACK SOFTWARE ENGINEER · PRODUCT FOUNDER',
-      /* The hero lockup is two tiers: a wide-tracked line above a display line. */
-      titleTop: 'FULL-STACK SOFTWARE ENGINEER &',
-      titleMain: 'PRODUCT FOUNDER',
-      headline: 'I build digital products that survive the real world.',
-      support:
-        'From multi-tenant commerce systems to AI and education platforms, I turn complex ideas into reliable, usable software.',
-      origin: 'ENGINEERED IN BAGHDAD · BUILT FOR THE WORLD',
-      primaryCta: 'Explore selected work',
-      secondaryCta: 'Start a project',
+      /* Two tiers: the name on the display face, the role tracked beneath it. */
+      name: 'Mohammed Nafia',
+      role: 'Software & AI Engineer',
+      intro:
+        'I build web systems and digital products from idea to deployment, with attention to the details that make a system clear, reliable, and ready to grow.',
       orbitLabel: 'Featured products',
-      orbitHint: 'Drag to explore',
-      orbitHintTouch: 'Swipe to explore',
-    },
-    credibility: {
-      eyebrow: 'EVIDENCE',
-      title: 'RECEIPTS',
-      items: [
-        {
-          value: 'Sendy',
-          label: 'Founded and engineered a multi-tenant commerce and logistics SaaS platform.',
-        },
-        {
-          value: '1st place',
-          label: 'ITS Hackathon 2025 — team award for NANO, an AI-powered OCR platform.',
-        },
-        {
-          value: '2nd place',
-          label: 'HUB200 Hackathon 2025 — Dynamic Form Builder, Global Entrepreneurship Week.',
-        },
-        {
-          value: 'Arabic-first',
-          label: 'Bilingual products with complete RTL/LTR parity, not translated afterwards.',
-        },
-      ],
-      note: 'Every claim on this site traces to a project I built or an award I hold. Nothing here is a placeholder metric.',
     },
     work: {
-      title: 'SELECTED WORK',
+      title: 'Selected Work',
       intro:
-        'Commerce, education, fintech and AI systems — mostly the operational kind, where the interface gets used every day and correctness matters more than novelty.',
+        'Projects across commerce, education, fintech, and AI. I selected the ones where the problem was clear and the engineering decisions were worth explaining.',
+      /* Order is load-bearing: `WORK_SLUGS` in `home/sections.tsx` zips to it. */
+      items: [
+        {
+          title: 'Sendy',
+          subtitle: 'Multi-Tenant Commerce & Logistics Platform',
+          text: 'A platform that brings merchant operations, orders, and delivery into one system, with clear separation between users, roles, and organizations.',
+          cta: 'View Sendy Case Study',
+        },
+        {
+          title: 'IMMAR',
+          subtitle: 'Bilingual Education Platform',
+          text: 'A student application and a separate web dashboard for administrators and teachers. Both work with the same platform and data, but each has its own permissions and user flow.',
+          cta: 'View IMMAR Case Study',
+        },
+        {
+          /*
+           * Every line here already existed for this project: the subtitle is
+           * its `categoryLabel` and the text is its `headline` — the field the
+           * schema designates for cards. Nothing was written for this slot.
+           */
+          title: 'Virtual Banking API',
+          subtitle: 'Fintech backend · Digital wallet',
+          text: 'A money transfer that fails halfway is worse than one that never starts. This project is about the halfway case.',
+          cta: 'View Virtual Banking API Case Study',
+        },
+        {
+          title: 'Al-Tafawuq School System',
+          subtitle: 'School Management & Operations Platform',
+          text: 'A system that brings attendance, absences, tuition, and student follow-up into one dashboard, giving school administration a single place for the information they use every day.',
+          cta: 'View Al-Tafawuq',
+        },
+      ],
     },
     background: {
-      title: 'BACKGROUND',
+      title: 'Background',
+      lead: "I'm Mohammed Nafia.",
       paragraphs: [
-        "I'm a full-stack engineer and product founder in Baghdad. I studied AI and Robotics Engineering at Al-Nahrain University, and I've been freelancing since 2024 — building the kind of software somebody sits in front of for six hours a day.",
-        'I founded Sendy because I watched merchants run whole businesses across a notebook, a chat app and three delivery companies that never spoke to each other. Most of what I care about lives in the unglamorous half: failure paths, permission checks, and making things legible when they break.',
+        "I'm a Software & AI Engineer. I started my professional experience working with Qi Card, then went on to work across different products and software projects. Today, I work independently with companies and teams to build software systems and digital products.",
+        'The projects I enjoy most usually involve more than a screen connected to an API.',
+        'There are different users and permissions, data moving between multiple parts of the system, and flows that still need to behave correctly when a request fails, a state changes, or someone tries to access something they should not.',
+        'That is why I usually start with how the system works before deciding how the interface should look.',
+        'I define who uses it, what they need to see, what they are allowed to change, and how the system should behave when things do not go as expected.',
+        'Then I build.',
       ],
-      features: [
-        {
-          title: 'Product & planning',
-          text: 'Scope, architecture and a task plan you could hand to another engineer.',
-        },
-        {
-          title: 'Full-stack delivery',
-          text: 'Data model to interface, shipped as one product and actually deployed.',
-        },
-        {
-          title: 'Bilingual & operational',
-          text: 'Arabic-first RTL, dense dashboards, RBAC, and failure states that tell the truth.',
-        },
-      ],
-      cta: 'More about me',
-    },
-    stack: {
-      label: 'Tools I reach for',
-      items: [
-        'React',
-        'TypeScript',
-        'Next.js',
-        'ASP.NET Core',
-        'C#',
-        'FastAPI',
-        'Python',
-        'PostgreSQL',
-        'Entity Framework',
-        'Tailwind CSS',
-        'Docker',
-        'Railway',
-        'DigitalOcean',
-      ],
-    },
-    cases: {
-      title: 'CASE STUDIES',
-      intro:
-        'Three products, three different problems. Each one goes into what actually broke and what I decided — not a feature list.',
-      next: 'Next case study',
-    },
-    contact: {
-      title: 'WORK WITH ME',
-      lead: "Tell me what you're building and what's blocking it. If I'm the right person for it I'll tell you how I'd approach it — and if I'm not, I'll tell you that too. You can also just email me at",
-      or: 'or',
-    },
-    featured: {
-      eyebrow: 'SELECTED WORK',
-      title: 'Three products, three different problems',
-      support:
-        'A commerce platform for merchants who had no system. An education ecosystem that had to keep two audiences apart. An AI product built in a weekend that had to be verifiable on sight.',
-    },
-    capabilities: {
-      eyebrow: 'CAPABILITIES',
-      title: 'What I actually deliver',
-      support:
-        'Described as outcomes rather than a wall of logos. Every capability below is backed by a project on this site.',
-      items: [
-        {
-          title: 'SaaS & multi-tenant product engineering',
-          text: 'Tenant isolation, subscription logic, role models and the operational surfaces a paying business runs on.',
-        },
-        {
-          title: 'Full-stack web application delivery',
-          text: 'From data model to interface, shipped as one coherent product rather than two systems that meet at an API.',
-        },
-        {
-          title: 'Backend architecture & REST API design',
-          text: 'Clean Architecture, layered dependency flow, validated contracts, and failure paths designed rather than discovered.',
-        },
-        {
-          title: 'Dashboards & operational systems',
-          text: 'Dense, high-frequency interfaces built for people who use them all day, not for a screenshot.',
-        },
-        {
-          title: 'AI-enabled workflows & integrations',
-          text: 'Inference pipelines wrapped in interfaces a non-technical person can verify and act on.',
-        },
-        {
-          title: 'Bilingual Arabic/English implementation',
-          text: 'Logical-property layouts, authored RTL behaviour, and technical tokens that stay readable in both directions.',
-        },
-        {
-          title: 'Auth, RBAC, payments & third-party integration',
-          text: 'JWT, permission models down to the field level, payment sessions, webhooks and providers that fail politely.',
-        },
-        {
-          title: 'Deployment, debugging & production hardening',
-          text: 'Environments, domains, DNS, seed data and the verification pass that happens before a client ever sees it.',
-        },
-      ],
+      /*
+       * Not from the copy document — the résumé download was specified as a
+       * requirement rather than as a sentence, and a button needs a label.
+       */
+      cv: 'Download CV (PDF)',
     },
     process: {
-      eyebrow: 'HOW I WORK',
-      title: 'Four stages, no mystery',
-      support:
-        'I can work from an existing specification, or help shape the product from an early idea. Either way the sequence is the same.',
+      title: 'How I Work',
       steps: [
         {
           number: '01',
-          title: 'Understand',
-          text: 'The business, the users, and what actually breaks today. Before scope, before stack, before anything.',
+          title: 'Understand the System Before Writing Code',
+          text: [
+            'I define users, permissions, data flow, core states, and failure cases early, before those decisions turn into scattered fixes during development.',
+          ],
         },
         {
           number: '02',
-          title: 'Define',
-          text: 'Scope, architecture and experience — written down, agreed, and small enough to actually finish.',
+          title: 'Build the Product as One System',
+          text: [
+            'The database, API, and interface are parts of the same product. A decision in one layer should have a clear and understood effect on the others.',
+          ],
         },
         {
           number: '03',
-          title: 'Build',
-          text: 'Implementation, integration and testing in vertical slices, so you see working software early and often.',
+          title: 'Arabic Is Not a Secondary Version',
+          text: [
+            'If a product supports Arabic and English, I design for both from the beginning: RTL and LTR layouts, text, tables, forms, and navigation.',
+          ],
         },
         {
           number: '04',
-          title: 'Launch & improve',
-          text: 'Deployment, environments, hardening — then real feedback turned into a prioritised next version.',
+          title: 'Deploy, Test, Then Deliver',
+          text: [
+            'Finishing the code is not the end of the project.',
+            'I review the main flows, error cases, permissions, APIs, and deployed environment before delivery, and make sure the product behaves the way it was designed to behave outside the development environment.',
+          ],
+        },
+      ],
+    },
+    results: {
+      title: 'Results & Milestones',
+      /* An array, because the Arabic section carries no support line at all. */
+      note: ['I prefer to have a real project or result behind anything I claim.'],
+      items: [
+        {
+          value: 'Sendy',
+          text: 'Founded and engineered a multi-tenant SaaS platform for commerce and logistics.',
+        },
+        {
+          value: '1st Place',
+          event: 'QI CARD Hackathon 2025',
+          text: 'Banking System — addressed duplicate money transfers caused by repeated requests, with a focus on transaction safety and preventing the same financial operation from being processed more than once.',
+        },
+        {
+          value: '1st Place',
+          event: 'ITS Hackathon 2025',
+          text: 'NANO — an AI-powered optical character recognition platform for Arabic documents.',
+        },
+        {
+          value: '2nd Place',
+          event: 'HUB200 Hackathon 2025',
+          text: 'Dynamic Form Builder — a no-code tool for creating and configuring dynamic forms.',
+        },
+      ],
+    },
+    tech: {
+      title: 'Technologies I Use',
+      intro:
+        'I do not list every technology I have tried. These are the tools I regularly return to when building projects.',
+      groups: [
+        {
+          title: 'Backend',
+          items: ['ASP.NET Core', 'C#', 'FastAPI', 'Python', 'Entity Framework Core', 'PostgreSQL'],
+        },
+        {
+          title: 'Frontend',
+          items: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS'],
+        },
+        {
+          title: 'Infrastructure',
+          items: ['Docker', 'Railway', 'DigitalOcean'],
+        },
+        {
+          title: 'AI & Automation',
+          items: [
+            'n8n',
+            'Hugging Face',
+            'AI APIs',
+            'Automation Workflows',
+            'OpenAI API',
+            'Ollama',
+            'LangChain',
+          ],
+        },
+      ],
+    },
+    cases: {
+      title: 'Case Studies',
+      intro: [
+        'The final interface matters, but it is not the whole story.',
+        'Each case study focuses on the problem, the constraints, the decisions I made, and the parts that required more thought than simply writing the code.',
+      ],
+      /* Order zips to `CASE_SLUGS` in `home/sections.tsx`. */
+      items: [
+        {
+          title: 'Sendy',
+          subtitle: 'From Separate Operations to One Operating Platform',
+          paragraphs: [
+            'A merchant needs to follow an order from the moment it is created until it is delivered.',
+            'At the same time, the system needs to know who owns that order, who can modify it, and which parts of the process each user is allowed to see.',
+            'In this case study, I break down the system architecture, role separation, and the workflows that move through multiple states before they are complete.',
+          ],
+          cta: 'Read Sendy Case Study',
+        },
+        {
+          title: 'IMMAR',
+          subtitle: 'The Student App and Admin Dashboard Should Not Be the Same Product',
+          paragraphs: [
+            'Students and staff work within the same platform, but their needs and permissions are completely different.',
+            'The challenge was defining that boundary clearly: what belongs in the student application, what stays inside the operational dashboard, and who the system allows to access each part.',
+          ],
+          cta: 'Read IMMAR Case Study',
+        },
+        {
+          title: 'Virtual Banking API',
+          subtitle: 'What Happens When the Same Transfer Is Sent Twice?',
+          paragraphs: [
+            'In financial systems, receiving a successful request is not enough.',
+            'The important part is making sure the operation itself is not repeated because of multiple clicks, retries, or network issues.',
+            'This project focuses on transaction safety, operation state, and preventing the same financial transaction from being executed more than once.',
+          ],
+          cta: 'Read Virtual Banking API Case Study',
         },
       ],
     },
     archive: {
-      eyebrow: 'ARCHIVE',
-      title: 'ARCHIVE',
-      support: 'Backend systems, operational platforms and award-winning experiments.',
-      cta: 'See all work',
-    },
-    about: {
-      eyebrow: 'WHO IS BUILDING THIS',
-      title: 'An engineer from Baghdad who ships products, not prototypes.',
-      text: "I'm Mohammed Nafia — a full-stack engineer and product founder based in Baghdad. I studied Artificial Intelligence and Robotics Engineering at Al-Nahrain University, and I have been freelancing professionally since 2024. I founded Sendy, planned and built IMMAR, and won first place at the ITS Hackathon with NANO. What connects all of it is a preference for software that holds up when something goes wrong.",
-      cta: 'More about me',
-    },
-    finalCta: {
-      title: "Have a serious product to build? Let's make it real.",
+      title: 'Archive',
       support:
-        'Tell me what you are trying to build and what is blocking it. If I am the right person for it, I will tell you how I would approach it. If I am not, I will tell you that too.',
-      cta: 'Start a project',
-      alt: 'Or reach me directly',
+        'Smaller projects than the main case studies, but each represents a different part of the work I do.',
+      /* Order zips to `ARCHIVE_SLUGS` in `home/sections.tsx`. */
+      items: [
+        {
+          title: 'Al-Tafawuq School System',
+          subtitle: 'School Operations Platform',
+          paragraphs: [
+            'Attendance, absences, tuition, and day-to-day student follow-up in one dashboard.',
+          ],
+          cta: 'View Project',
+        },
+        {
+          title: 'NANO',
+          subtitle: 'Arabic OCR Starting From an Image',
+          paragraphs: [
+            'Extracting text from the image was only one part of the problem.',
+            'The result also had to be reviewable, structured, and useful, especially for Arabic documents that were never created as digital text in the first place.',
+          ],
+          cta: 'View NANO',
+        },
+        {
+          title: 'Dynamic Form Builder',
+          subtitle: 'No-Code Tool',
+          paragraphs: [
+            'A form builder for adding, arranging, and configuring fields without writing code.',
+          ],
+          cta: 'View Project',
+        },
+        {
+          title: 'Invoice Mini App',
+          subtitle: 'SuperQi Mini App',
+          paragraphs: [
+            'A mini application for creating and viewing invoices inside the SuperQi ecosystem, where the product operates within the APIs and constraints of a larger platform.',
+          ],
+          cta: 'View Project',
+        },
+        {
+          title: 'MedicHub AI',
+          subtitle: 'Medical Imaging Backend',
+          paragraphs: [
+            'Multiple image-analysis models exposed through a single FastAPI service, with a unified interface for receiving input and returning results.',
+          ],
+          cta: 'View Project',
+        },
+      ],
+    },
+    contact: {
+      title: 'Work With Me',
+      paragraphs: [
+        'If you are building a new product, internal system, dashboard, backend, or an idea that needs to become a working product, tell me about it.',
+        'You do not need a polished brief.',
+        'Tell me what exists today, what should happen next, and what is currently getting in the way.',
+        'If I believe I can contribute to the project, I will explain how I would approach it from the beginning. If it is outside the kind of work I do, I will tell you directly.',
+      ],
+      /* The copy sets these two in Latin on both sides. */
+      linkedin: 'LinkedIn',
+      github: 'GitHub',
+      directLabel: 'Direct contact',
     },
   },
 
@@ -304,6 +384,14 @@ export const en = {
     ctaButton: 'Start a project',
     conceptNotice:
       'The product interfaces on this page are compositions built from each platform’s real module structure. They are not screenshots of production systems — these are private client and commercial platforms.',
+    /*
+     * Used in place of `conceptNotice` on any case study with a supplied hero
+     * export. Both halves have to be said: the image at the top is real product
+     * interface but a presentation render rather than a capture, and the
+     * compositions further down are still coded concepts.
+     */
+    mockupNotice:
+      'The interface above is a presentation mockup of the product, not a screenshot captured from a running system. The interface compositions further down this page are built from the platform’s real module structure — these are private client and commercial platforms.',
   },
 
   about: {
@@ -340,7 +428,7 @@ export const en = {
       {
         period: '6-month programme',
         title: 'Software Engineering Trainee, Iraq TechSchool',
-        text: 'In collaboration with QiCard, Digital Zone, Computiq and HUB200. REST API design, database modelling, authentication flows and layered system architecture, with team projects in production-like environments.',
+        text: 'In collaboration with Qi Card, Digital Zone, Computiq and HUB200. REST API design, database modelling, authentication flows and layered system architecture, with team projects in production-like environments.',
       },
       {
         period: 'Selected',
@@ -668,7 +756,7 @@ export const en = {
   },
 
   footer: {
-    tagline: 'Engineered in Baghdad. Built for the real world.',
+    tagline: 'Engineered in Baghdad. Designed for the real world.',
     navTitle: 'Navigate',
     connectTitle: 'Connect',
     localeTitle: 'Language',

@@ -29,20 +29,31 @@ export function Squiggle({ className = '' }: { className?: string }) {
 /**
  * Mandatory section header: pixel title + squiggle, centred.
  * Every section on the site uses this — no exceptions.
+ *
+ * `as` exists only so the *first* header on a sub-page can be the document's
+ * `h1`. Sub-pages had no `h1` at all: they opened with this component, which
+ * always emitted `h2`, so /work, /services, /about, /contact and /privacy each
+ * shipped a document whose outline started at level two and whose strongest
+ * on-page heading signal was missing entirely. Home and the case studies were
+ * unaffected — they author their own `h1`.
+ *
+ * Default stays `h2`; exactly one caller per page passes `as="h1"`.
  */
 export function SecHead({
   title,
   intro,
   delay = 0,
+  as: Heading = 'h2',
 }: {
   title: string;
   intro?: string;
   delay?: number;
+  as?: 'h1' | 'h2';
 }) {
   return (
     <>
       <Reveal as="header" className="sec-head" delay={delay}>
-        <h2 className="pixel-title">{title}</h2>
+        <Heading className="pixel-title">{title}</Heading>
         <Squiggle />
       </Reveal>
       {intro ? (

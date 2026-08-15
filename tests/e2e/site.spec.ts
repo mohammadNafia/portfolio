@@ -250,7 +250,13 @@ test.describe('404', () => {
  */
 test.describe('generated metadata routes', () => {
   for (const [path, type] of [
-    ['/icon', /image\/png/],
+    /*
+     * `/icon.png`, not `/icon`. The ImageResponse route that answered the bare
+     * path was retired when the generated icon set landed — `src/app/icon.tsx`
+     * became `src/app/icon.png`, which Next serves by convention at the path
+     * with the extension. This asked for the old one and had been failing since.
+     */
+    ['/icon.png', /image\/png/],
     ['/robots.txt', /text\/plain/],
     ['/sitemap.xml', /xml/],
   ] as const) {
@@ -300,6 +306,52 @@ test.describe('generated metadata routes', () => {
         const response = await request.get(pathname, { maxRedirects: 0 });
         expect(response.status(), `${pathname} was redirected or failed`).toBe(200);
         expect(response.headers()['content-type']).toMatch(/image\/png/);
+      }
+    });
+  }
+
+  /*
+   * Case studies are the pages that actually get shared, and they nearly
+   * shipped without a card.
+   *
+   * Next.js REPLACES a parent `openGraph` object rather than merging into it,
+   * so a page that sets title/description/url without `images` silently drops
+   * og:image — which is the tag Facebook, LinkedIn, WhatsApp and Slack read.
+   * The homepage assertions above all passed while every case study had no
+   * og:image at all, so this is asserted where the omission actually occurs.
+   *
+   * The twitter:title check is the same bug seen from the other side: with no
+   * `twitter` block the page inherits the site-wide default, and a shared case
+   * study announces the generic portfolio title instead of its own.
+   */
+  for (const locale of ['en', 'ar'] as const) {
+    test(`${locale} case studies carry their own card`, async ({ page }) => {
+      const slugs = ['sendy', 'immar', 'nano-ocr'];
+
+      for (const slug of slugs) {
+        await page.goto(`/${locale}/work/${slug}`);
+
+        const ogImage = await page
+          .locator('meta[property="og:image"]')
+          .first()
+          .getAttribute('content');
+        expect(ogImage, `/${locale}/work/${slug} has no og:image`).toBeTruthy();
+        expect(ogImage, `og:image on ${slug} is not absolute`).toMatch(/^https?:\/\//);
+
+        const ogTitle = await page
+          .locator('meta[property="og:title"]')
+          .first()
+          .getAttribute('content');
+        const twitterTitle = await page
+          .locator('meta[name="twitter:title"]')
+          .first()
+          .getAttribute('content');
+
+        expect(twitterTitle, `${slug} has no twitter:title`).toBeTruthy();
+        expect(
+          twitterTitle,
+          `twitter:title on ${slug} fell back to the site default instead of the case study title`,
+        ).toBe(ogTitle);
       }
     });
   }
@@ -446,4 +498,45 @@ test.describe('no horizontal overflow', () => {
       });
     }
   }
+});
+
+/**
+ * The carousel is shared, so it has to be safe to put two of them on one page.
+ *
+ * The version this one grew out of addressed its cards through
+ * `document.getElementById('case-card-N')`, which is correct for exactly as
+ * long as there is one carousel in the document and silently drives the wrong
+ * one the moment there are two. These assertions pin the two properties that
+ * make a second instance safe: ids are namespaced per instance, and the
+ * keyboard handler only reaches the carousel that holds focus.
+ */
+test.describe('carousel', () => {
+  test('namespaces its card ids and dot targets', async ({ page }) => {
+    await page.goto('/en');
+    const targets = await page
+      .locator('#archive [role="tab"]')
+      .evaluateAll((dots) => dots.map((dot) => dot.getAttribute('aria-controls')));
+
+    expect(targets).toHaveLength(5);
+    expect(new Set(targets).size, 'two dots point at the same card').toBe(5);
+
+    for (const target of targets) {
+      expect(await page.locator(`[id="${target}"]`).count(), `${target} is not unique`).toBe(1);
+    }
+  });
+
+  test('advances on arrow keys only while it holds focus', async ({ page }) => {
+    await page.goto('/en');
+    const dots = page.locator('#archive [role="tab"]');
+    await dots.first().scrollIntoViewIfNeeded();
+    await dots.first().focus();
+
+    await page.keyboard.press('ArrowRight');
+    await expect(dots.nth(1)).toHaveAttribute('aria-selected', 'true');
+
+    // Focus somewhere outside it: the arrows must stop reaching the carousel.
+    await page.locator('#work a').first().focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(dots.nth(1)).toHaveAttribute('aria-selected', 'true');
+  });
 });

@@ -22,6 +22,12 @@
     "binding": "ASSETS"
   },
 
+  // Workers Logs, verified against Cloudflare's docs as included on BOTH the
+  // Free and Paid plans — not a paid-only feature and not a billing risk.
+  //   Free: 200,000 log events/day, 3-day retention
+  //   Paid: 20M/month included, then $0.60/million, 7-day retention
+  // A portfolio site will not approach 200k events/day. Logpush is the part
+  // that needs Business/Enterprise; this is not that.
   "observability": {
     "enabled": true
   },
@@ -42,6 +48,26 @@
   "env": {
     "production": {
       "name": "portfolio-production",
+
+      // The apex is the single canonical host. `custom_domain: true` makes
+      // wrangler create the Custom Domain and its proxied DNS record itself —
+      // Workers Custom Domains only function proxied, so there is no
+      // grey-cloud option here and nothing to add by hand.
+      //
+      // `www` is deliberately NOT a second Custom Domain: two Custom Domains
+      // means two live hosts serving identical content. It is a Redirect Rule
+      // to the apex instead, so there is exactly one indexable surface.
+      "routes": [{ "pattern": "mohammednafia.com", "custom_domain": true }],
+
+      // Adding `routes` makes wrangler default `workers_dev` to FALSE, which
+      // silently retires the .workers.dev URL. That is not wanted here: it is
+      // the fallback used to verify a deploy before DNS is trusted, and losing
+      // it while a Custom Domain is still provisioning leaves no reachable URL
+      // at all. Keeping both live costs nothing in SEO — every page carries a
+      // canonical pointing at the apex, so the workers.dev copy de-duplicates
+      // itself.
+      "workers_dev": true,
+
       "compatibility_date": "2026-08-01",
       "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
       "assets": {

@@ -74,11 +74,25 @@ export async function POST(request: Request): Promise<NextResponse<ContactRespon
     });
 
     if (!response.ok) {
+      // The visitor still gets an opaque `error` — provider detail is not theirs
+      // to see. But it MUST reach the operator, because the ways this call fails
+      // need different fixes and are indistinguishable from outside. The status
+      // code alone does NOT separate them — Resend answers 403 both for a bad
+      // key (`invalid_api_key`) and for a refused recipient (`validation_error`,
+      // raised when the resend.dev sender is used to reach any address other
+      // than the Resend account's own). Only the `name` in the body tells them
+      // apart, which is why the body is logged verbatim rather than the status.
+      // Read it with `wrangler tail --env production`. The body carries no
+      // credential — only Resend's own error name and message.
+      const detail = await response.text().catch(() => '<unreadable body>');
+      console.error(`[contact] Resend rejected the send: HTTP ${response.status} ${detail}`);
       return NextResponse.json({ status: 'error' }, { status: 502 });
     }
 
     return NextResponse.json({ status: 'ok' });
-  } catch {
+  } catch (cause) {
+    // Network-level failure — never reached Resend at all. Distinct from above.
+    console.error('[contact] Resend request threw before any response:', cause);
     return NextResponse.json({ status: 'error' }, { status: 502 });
   }
 }

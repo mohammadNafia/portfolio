@@ -2,42 +2,68 @@ import Link from 'next/link';
 import { localeHref, type Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/dictionaries/en';
 import type { Project } from '@/content/schema';
-import { site, socialLinks } from '@/lib/site';
+import { site } from '@/lib/site';
 import { Section, SecHead, Tag } from '../ui/Section';
 import { Reveal } from '../ui/Reveal';
-import { Button, WavyLink } from '../ui/Button';
+import { Button } from '../ui/Button';
 import { FanCardArt } from './FanCardArt';
-import { GalleryZoom } from './GalleryZoom';
-import { CaseCarousel } from './CaseCarousel';
+import { SettleGrid } from './SettleGrid';
+import { Carousel, type CarouselItem } from './Carousel';
 import { ContactForm } from '../contact/ContactForm';
 
-/* ------------------------------------------------------------ Work gallery */
+/**
+ * The home page is one authored document (see the note over `home` in
+ * `dictionaries/en.ts`). Every section below renders a block of that copy
+ * verbatim; the slug lists are the only thing the components add, because the
+ * copy names products and the router needs routes.
+ *
+ * Each list is index-aligned with its dictionary array. Reorder one and you must
+ * reorder the other — `tests/unit/content.test.ts` asserts the lengths match.
+ */
+/*
+ * NANO left this list for Virtual Banking API. It is not gone from the site:
+ * it keeps its tier-1 case study, its slot in the hero fan and its card in the
+ * archive carousel below — only the selected-work grid changed.
+ */
+const WORK_SLUGS = ['sendy', 'immar', 'virtual-banking', 'al-tafawuq'] as const;
+const CASE_SLUGS = ['sendy', 'immar', 'virtual-banking'] as const;
+const ARCHIVE_SLUGS = [
+  'al-tafawuq',
+  'nano-ocr',
+  'form-builder',
+  'invoice-mini-app',
+  'medichub',
+] as const;
+
+/** The trailing arrow in every "→" call to action, mirrored for RTL. */
+function Arrow() {
+  return (
+    <span aria-hidden="true" className="rtl:-scale-x-100">
+      →
+    </span>
+  );
+}
+
+/* ------------------------------------------------------------ Selected work */
 
 /**
- * Mixed-ratio gallery. Hover blurs and dims the face, scales the tile, and
- * fades in a centred caption. On touch there is no hover, so the caption
- * becomes a permanent label beneath the tile instead.
+ * Four products, each with its own paragraph — so the copy sits under the tile
+ * rather than behind a hover state that a phone never gets.
  *
  * This is also the panel that climbs over the hero, so it owns its own sawtooth
  * and carries `.after-hero` — see motion.md → "Hero overlay scroll".
  *
- * One tile does the scroll-linked zoom-out reveal instead of the blur-up — see
- * `GalleryZoom` and `assets/gallery-zoom-reveal.md`.
- */
-
-/**
- * Which tile zooms. Exactly one per grid: two of them fight for z-index and read
- * as a glitch.
+ * Every tile keeps the site's one entrance, the `Reveal` blur-up, and the grid
+ * adds the settling-weight move on top of it — see `SettleGrid` for what that
+ * is and, more to the point, for why it is built out of bounded constants
+ * rather than tuned magnitudes. The two compose because they touch different
+ * properties on different elements: `Reveal` owns opacity and blur on the
+ * `<li>`, the settle owns transform on the element inside it.
  *
- * Index 3 rather than the flagship at index 0, because index 0 is in the first
- * row at every breakpoint. Its oversized state would be drawn over a hero that
- * is still on screen, lagging at 0.2× while the sawtooth cuts through it — two
- * signature moves colliding in the same 400px of scroll. From row two down, the
- * hero is already covered and the zoom has the screen to itself.
+ * This slot previously held a scroll-linked zoom-out, which was removed rather
+ * than tuned a fifth time.
  */
-const ZOOM_INDEX = 3;
-
-export function WorkGallery({
+export function SelectedWork({
   projects,
   locale,
   dict,
@@ -46,49 +72,229 @@ export function WorkGallery({
   locale: Locale;
   dict: Dictionary;
 }) {
-  const ratios = ['4/3', '1/1', '9/16', '1/1', '4/3', '4/3', '9/16', '1/1'];
+  const { work } = dict.home;
 
   return (
-    <Section id="work" tone="bg" wide sawtooth="bg" className="after-hero gallery-panel">
-      <SecHead title={dict.home.work.title} intro={dict.home.work.intro} />
+    <Section id="work" tone="bg" wide sawtooth="bg" className="after-hero">
+      <SecHead title={work.title} intro={work.intro} />
 
-      <ul role="list" className="gallery mt-16">
-        {projects.map((project, index) => {
-          const style = { aspectRatio: ratios[index % ratios.length] };
-          const face = (
-            <Link
-              href={localeHref(locale, `work/${project.slug}`)}
-              className="gallery__link"
-              aria-label={`${project.title} — ${dict.common.readCaseStudy}`}
-            >
-              <span className="gallery__face">
-                <FanCardArt project={project} />
-              </span>
-              <span className="gallery__cap">
-                <span className="block text-[15px] font-semibold">
-                  {project.titleLocalized[locale]}
-                </span>
-                <span className="mt-1 block text-[13px] opacity-80">
-                  {project.categoryLabel[locale]}
-                </span>
-              </span>
-            </Link>
+      <SettleGrid className="gallery gallery--work mt-16">
+        {work.items.map((item, index) => {
+          const slug = WORK_SLUGS[index]!;
+          const project = projects.find((candidate) => candidate.slug === slug)!;
+
+          return (
+            <Reveal key={slug} as="li" delay={index * 80} className="gallery__item">
+              {/*
+                The settle's transform goes here, not on the `<li>` — the cell
+                itself must never transform, or the grid tracks resolve off a
+                moving box. `data-settle` is what `SettleGrid` collects.
+              */}
+              <div className="settle__inner" data-settle>
+                <Link
+                  href={localeHref(locale, `work/${slug}`)}
+                  className="case-card block h-full"
+                  aria-label={`${item.title} — ${item.cta}`}
+                >
+                  <span className="case-card__cover" aria-hidden="true">
+                    <FanCardArt project={project} />
+                  </span>
+                  <span className="case-card__body">
+                    <span className="case-card__title">{item.title}</span>
+                    <span className="case-card__sub">{item.subtitle}</span>
+                    <span className="case-card__text">{item.text}</span>
+                    <span className="case-card__cta">
+                      {item.cta}
+                      <Arrow />
+                    </span>
+                  </span>
+                </Link>
+              </div>
+            </Reveal>
           );
+        })}
+      </SettleGrid>
+    </Section>
+  );
+}
 
-          /* The zoom is this tile's entrance, so it does not also blur up. */
-          return index === ZOOM_INDEX ? (
-            <GalleryZoom key={project.slug} style={style}>
-              {face}
-            </GalleryZoom>
-          ) : (
-            <Reveal
-              key={project.slug}
-              as="li"
-              delay={index * 80}
-              className="gallery__item"
-              style={style}
-            >
-              {face}
+/* --------------------------------------------------------------- Background */
+
+/**
+ * The longest prose on the page, so it runs in a reading measure rather than
+ * centred, with a portrait slot beside it for relief.
+ *
+ * IMAGE SLOT — `.portrait-slot` is an empty `--surface` block at 3:4. No
+ * photograph has been supplied for it; it is listed in the handover notes.
+ * Drop a file in and replace the block, do not stretch an existing asset into
+ * it.
+ *
+ * The résumé download sits directly under the section, as a dark pill. It is a
+ * plain `<a download>` at a static path — one click, straight to the file, no
+ * intermediate page.
+ */
+export function Background({ dict }: { dict: Dictionary }) {
+  const { background } = dict.home;
+
+  return (
+    <Section id="background" tone="alt" grain>
+      <SecHead title={background.title} />
+
+      <div className="split mt-12">
+        <div className="prose-block">
+          <Reveal as="p" className="prose-block__lead" delay={80}>
+            {background.lead}
+          </Reveal>
+
+          {background.paragraphs.map((paragraph, index) => (
+            <Reveal key={index} as="p" className="prose-block__p" delay={140 + index * 60}>
+              {paragraph}
+            </Reveal>
+          ))}
+        </div>
+
+        <Reveal className="split__aside" delay={160}>
+          <div className="portrait-slot" aria-hidden="true" />
+        </Reveal>
+      </div>
+
+      <Reveal className="mt-14 flex justify-center" delay={240}>
+        <Button variant="dark" href="/Mohammed-nafia-cv.pdf" download>
+          {background.cv}
+        </Button>
+      </Reveal>
+    </Section>
+  );
+}
+
+/* -------------------------------------------------------------- How I work */
+
+export function HowIWork({ dict }: { dict: Dictionary }) {
+  const { process } = dict.home;
+
+  return (
+    <Section id="process" tone="bg">
+      <SecHead title={process.title} />
+
+      <ol role="list" className="steps mt-14">
+        {process.steps.map((step, index) => (
+          <Reveal key={step.number} as="li" delay={index * 80} className="step">
+            <h3 className="step__title">
+              {/*
+                `pixel-num` keeps Handjet on Arabic pages. Arabic display type
+                falls back to IBM Plex Sans Arabic (see globals.css), but that
+                swap exists for joined script — these are Latin digits, which
+                Handjet renders correctly, so the pixel identity survives here.
+                The em dash is the copy's own, not a separator we invented.
+              */}
+              <span className="step__num pixel-num">{step.number}</span>
+              {' — '}
+              {step.title}
+            </h3>
+
+            {step.text.map((paragraph, textIndex) => (
+              <p key={textIndex} className="step__text">
+                {paragraph}
+              </p>
+            ))}
+          </Reveal>
+        ))}
+      </ol>
+    </Section>
+  );
+}
+
+/* ------------------------------------------------------- Results & milestones */
+
+/**
+ * Awards and the founder claim, as pixel-numeral rows.
+ *
+ * This occupies the slot the reference gave to a "Notable Clients" logo wall.
+ * No client has given permission to be named, so a logo wall here would be
+ * invented — verified results go in its place.
+ *
+ * `note` is an array because the Arabic section deliberately carries no support
+ * line: it opens straight on the first result.
+ */
+export function Results({ dict }: { dict: Dictionary }) {
+  const { results } = dict.home;
+
+  return (
+    <Section id="results" tone="alt" grain>
+      <SecHead title={results.title} />
+
+      {results.note.map((line, index) => (
+        <Reveal key={index} as="p" className="sec-intro" delay={80}>
+          {line}
+        </Reveal>
+      ))}
+
+      <ul role="list" className="results mt-14">
+        {results.items.map((item, index) => (
+          <Reveal key={`${item.value}-${index}`} as="li" delay={index * 80} className="result">
+            <span className="result__value pixel-title">{item.value}</span>
+
+            <div className="result__body">
+              {'event' in item ? <span className="result__event ltr-island">{item.event}</span> : null}
+              <p className="result__text">{item.text}</p>
+            </div>
+          </Reveal>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
+/* ------------------------------------------------------------- Technologies */
+
+/**
+ * The stack, grouped as the copy groups it, one marquee per group — see the
+ * note over `.tech-rows` for why it is a row each rather than one long track.
+ *
+ * The loop is a 50% translate over a track duplicated end to end, so the second
+ * half is the first half again and is hidden from assistive technology. A short
+ * group is repeated until it is long enough to fill half a track: with three
+ * items the "duplicate" would be less than a screen wide and the row would run
+ * with a hole in it.
+ */
+/**
+ * Half a track has to be at least as wide as the widest container it runs in —
+ * the 1240px wide shell — or the loop shows daylight at the seam. Twelve tokens
+ * clears that with margin at every size in the four groups; the smallest group
+ * has three, so it repeats four times.
+ */
+const MARQUEE_MIN_ITEMS = 12;
+
+export function Technologies({ dict }: { dict: Dictionary }) {
+  const { tech } = dict.home;
+
+  return (
+    <Section id="tech" tone="bg" wide>
+      <SecHead title={tech.title} intro={tech.intro} />
+
+      <ul role="list" className="tech-rows mt-14">
+        {tech.groups.map((group, index) => {
+          const half = [...group.items];
+          while (half.length < MARQUEE_MIN_ITEMS) half.push(...group.items);
+          const track = [...half, ...half];
+
+          return (
+            <Reveal key={group.title} as="li" delay={index * 80}>
+              <p className="tech-row__label">{group.title}</p>
+
+              <div className="marquee">
+                <ul role="list" className="marquee__track">
+                  {track.map((item, itemIndex) => (
+                    <li
+                      key={`${item}-${itemIndex}`}
+                      className="tech-row__item ltr-island"
+                      aria-hidden={itemIndex >= half.length ? 'true' : undefined}
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </Reveal>
           );
         })}
@@ -97,112 +303,13 @@ export function WorkGallery({
   );
 }
 
-/* --------------------------------------------------------------- BACKGROUND */
-
-export function Background({ locale, dict }: { locale: Locale; dict: Dictionary }) {
-  const { background } = dict.home;
-
-  return (
-    <Section id="background" tone="alt" grain>
-      <SecHead title={background.title} />
-
-      <div className="mx-auto mt-7 max-w-[700px]">
-        {background.paragraphs.map((paragraph, index) => (
-          <Reveal key={index} as="p" delay={160 + index * 80} className="sec-intro">
-            {paragraph}
-          </Reveal>
-        ))}
-      </div>
-
-      <ul role="list" className="features">
-        {background.features.map((feature, index) => (
-          <Reveal key={feature.title} as="li" delay={index * 80} className="feature">
-            <span className="feature__icon" aria-hidden="true">
-              <span className="pixel-title !text-[26px] leading-none">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-            </span>
-            <h3>{feature.title}</h3>
-            <p>{feature.text}</p>
-          </Reveal>
-        ))}
-      </ul>
-
-      <Reveal className="mt-14 flex justify-center" delay={280}>
-        <Button variant="dark" href={localeHref(locale, 'about')}>
-          {background.cta}
-        </Button>
-      </Reveal>
-    </Section>
-  );
-}
-
-/* -------------------------------------------------------------------- Proof */
-
-/**
- * Awards and the founder claim, as pixel-numeral stats.
- *
- * This occupies the slot the reference gave to a "Notable Clients" logo wall.
- * No client has given permission to be named, so a logo wall here would be
- * invented — verified proof goes in its place.
- */
-export function Proof({ dict }: { dict: Dictionary }) {
-  const { credibility } = dict.home;
-
-  return (
-    <Section tone="bg">
-      <SecHead title={credibility.title} intro={credibility.note} />
-
-      <ul role="list" className="features">
-        {credibility.items.map((item, index) => (
-          <Reveal key={item.value} as="li" delay={index * 80} className="feature">
-            <span className="pixel-title block !text-[clamp(26px,3.4vw,38px)]">{item.value}</span>
-            <p className="mt-3">{item.label}</p>
-          </Reveal>
-        ))}
-      </ul>
-    </Section>
-  );
-}
-
-/* ------------------------------------------------------------------ Marquee */
-
-/**
- * Tools marquee. The reference ran client logos here; this runs the stack,
- * which is the honest version — the tools are verifiable, the clients are not
- * mine to name.
- */
-export function StackMarquee({ dict }: { dict: Dictionary }) {
-  const items = dict.home.stack.items;
-  const track = [...items, ...items];
-
-  return (
-    <Section tone="alt" grain className="!py-[clamp(56px,7vw,96px)]">
-      <Reveal className="text-center">
-        <p className="text-[13px] font-semibold uppercase tracking-wide text-ink-3">
-          {dict.home.stack.label}
-        </p>
-      </Reveal>
-
-      <div className="marquee mt-8">
-        <ul role="list" className="marquee__track">
-          {track.map((item, index) => (
-            <li
-              key={`${item}-${index}`}
-              className="ltr-island whitespace-nowrap text-[17px] font-semibold text-ink opacity-75"
-              aria-hidden={index >= items.length ? 'true' : undefined}
-            >
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </Section>
-  );
-}
-
 /* ------------------------------------------------------------- Case studies */
 
+/**
+ * Three studies, as full-width rows that alternate side. The prose here is the
+ * densest on the page — two or three paragraphs each — and a row gives it a
+ * measure to run in while keeping an image slot beside every one of them.
+ */
 export function CaseStudies({
   projects,
   locale,
@@ -212,16 +319,76 @@ export function CaseStudies({
   locale: Locale;
   dict: Dictionary;
 }) {
+  const { cases } = dict.home;
+
   return (
-    <Section id="case-studies" tone="bg" wide>
-      <SecHead title={dict.home.cases.title} intro={dict.home.cases.intro} />
-      <CaseCarousel projects={projects} locale={locale} dict={dict} />
+    <Section id="case-studies" tone="alt" grain wide>
+      <SecHead title={cases.title} />
+
+      {cases.intro.map((paragraph, index) => (
+        <Reveal key={index} as="p" className="sec-intro" delay={80 + index * 60}>
+          {paragraph}
+        </Reveal>
+      ))}
+
+      <div className="cases mt-16">
+        {cases.items.map((item, index) => {
+          const slug = CASE_SLUGS[index]!;
+          const project = projects.find((candidate) => candidate.slug === slug)!;
+
+          return (
+            <Reveal key={slug} as="article" className="case-row" delay={80}>
+              <div className="case-row__media" data-flip={index % 2 === 1 ? 'true' : undefined}>
+                <FanCardArt project={project} />
+              </div>
+
+              <div className="case-row__body">
+                <h3 className="case-row__title">{item.title}</h3>
+                <p className="case-row__sub">{item.subtitle}</p>
+
+                {item.paragraphs.map((paragraph, textIndex) => (
+                  <p key={textIndex} className="case-row__text">
+                    {paragraph}
+                  </p>
+                ))}
+
+                <Link href={localeHref(locale, `work/${slug}`)} className="case-card__cta">
+                  {item.cta}
+                  <Arrow />
+                </Link>
+              </div>
+            </Reveal>
+          );
+        })}
+      </div>
     </Section>
   );
 }
 
-/* ------------------------------------------------------------- Archive strip */
+/* ------------------------------------------------------------ Archive strip */
 
+/**
+ * The archive rides the shared `Carousel` — the same one any section can use,
+ * not a second implementation of it.
+ *
+ * Two things this section forces:
+ *
+ * The description is CLAMPED. In a grid an uneven paragraph just made an uneven
+ * card; in a carousel the focused card is the one being read, and NANO's two
+ * paragraphs against Form Builder's one line meant the whole band changed
+ * height on every slide. The flex track already equalises the cards to the
+ * tallest one, so the clamp is what stops that tallest one being three times
+ * the others. The full text is one click away in the case study.
+ *
+ * The paragraphs are joined by a space rather than stacked, because
+ * `-webkit-line-clamp` counts lines in one block and does not see block
+ * children. No word changes, and the break survives where it matters — on the
+ * case-study page.
+ *
+ * The whole carousel is ONE `Reveal`, not one per card. Revealing the cards
+ * individually inside a track that also slides read as a band of cards moving
+ * on their own, which is the thing the section is not.
+ */
 export function ArchiveStrip({
   projects,
   locale,
@@ -231,37 +398,54 @@ export function ArchiveStrip({
   locale: Locale;
   dict: Dictionary;
 }) {
+  const { archive } = dict.home;
+
+  const items: CarouselItem[] = archive.items.map((item, index) => {
+    const slug = ARCHIVE_SLUGS[index]!;
+    const project = projects.find((candidate) => candidate.slug === slug)!;
+
+    return {
+      key: slug,
+      label: item.title,
+      card: (
+        <Link
+          href={localeHref(locale, `work/${slug}`)}
+          className="case-card block h-full"
+          aria-label={`${item.title} — ${item.cta}`}
+        >
+          <span className="case-card__cover" aria-hidden="true">
+            <FanCardArt project={project} />
+          </span>
+
+          <span className="case-card__body">
+            <Tag brand={project.accent}>{dict.classification[project.classification]}</Tag>
+            <span className="case-card__title">{item.title}</span>
+            <span className="case-card__sub">{item.subtitle}</span>
+            <span className="case-card__text case-card__text--clamp">
+              {item.paragraphs.join(' ')}
+            </span>
+
+            <span className="case-card__cta">
+              {item.cta}
+              <Arrow />
+            </span>
+          </span>
+        </Link>
+      ),
+    };
+  });
+
   return (
-    <Section tone="alt" grain>
-      <SecHead title={dict.home.archive.title} intro={dict.home.archive.support} />
+    <Section id="archive" tone="bg" wide>
+      <SecHead title={archive.title} intro={archive.support} />
 
-      <ul role="list" className="mt-14 flex flex-col gap-3">
-        {projects.map((project, index) => (
-          <Reveal key={project.slug} as="li" delay={index * 80}>
-            <Link
-              href={localeHref(locale, `work/${project.slug}`)}
-              className="archive-row"
-              aria-label={`${project.title} — ${dict.common.readCaseStudy}`}
-            >
-              <span className="flex flex-wrap items-center gap-3">
-                <Tag brand={project.accent}>{dict.classification[project.classification]}</Tag>
-                <span className="text-[17px] font-semibold text-ink">
-                  {project.titleLocalized[locale]}
-                </span>
-              </span>
-              <span className="text-[15px] text-ink-2">{project.headline[locale]}</span>
-              <span className="text-[13px] font-semibold text-accent">
-                {dict.common.readCaseStudy}
-              </span>
-            </Link>
-          </Reveal>
-        ))}
-      </ul>
-
-      <Reveal className="mt-12 flex justify-center" delay={200}>
-        <Button variant="dark" href={localeHref(locale, 'work')}>
-          {dict.home.archive.cta}
-        </Button>
+      <Reveal delay={120}>
+        <Carousel
+          items={items}
+          locale={locale}
+          label={archive.title}
+          nextLabel={dict.common.nextCard}
+        />
       </Reveal>
     </Section>
   );
@@ -271,28 +455,49 @@ export function ArchiveStrip({
 
 export function WorkWithMe({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   const services = dict.services.items.map((item) => item.title);
+  const { contact } = dict.home;
+
+  /* Dialled, not displayed: the copy's spacing is for reading, `tel:` is not. */
+  const dial = `tel:${site.phone.replace(/[^\d+]/g, '')}`;
 
   return (
-    <Section id="work-with-me" tone="bg">
-      <SecHead title={dict.home.contact.title} />
+    <Section id="work-with-me" tone="alt" grain>
+      <SecHead title={contact.title} />
 
-      <Reveal className="mx-auto mt-7 max-w-[700px]" delay={80}>
-        <p className="sec-intro !mt-0">
-          {dict.home.contact.lead}{' '}
-          <WavyLink href={`mailto:${site.email}`}>{site.email}</WavyLink>
-          {', '}
-          <WavyLink href={site.linkedin} external>
-            {dict.common.linkedin}
-          </WavyLink>{' '}
-          {dict.home.contact.or}{' '}
-          <WavyLink href={site.github} external>
-            {dict.common.github}
-          </WavyLink>
-          .
-        </p>
+      <div className="prose-block prose-block--centred mt-10">
+        {contact.paragraphs.map((paragraph, index) => (
+          <Reveal key={index} as="p" className="prose-block__p" delay={80 + index * 60}>
+            {paragraph}
+          </Reveal>
+        ))}
+      </div>
+
+      <Reveal className="mt-10" delay={200}>
+        <ul role="list" className="contact-lines" aria-label={contact.directLabel}>
+          <li>
+            <a className="wavy ltr-island" href={`mailto:${site.email}`}>
+              {site.email}
+            </a>
+          </li>
+          <li>
+            <a className="wavy ltr-island" href={dial}>
+              {site.phone}
+            </a>
+          </li>
+          <li>
+            <a className="wavy" href={site.linkedin} target="_blank" rel="noopener noreferrer">
+              {contact.linkedin}
+            </a>
+          </li>
+          <li>
+            <a className="wavy" href={site.github} target="_blank" rel="noopener noreferrer">
+              {contact.github}
+            </a>
+          </li>
+        </ul>
       </Reveal>
 
-      <Reveal className="mx-auto mt-14 max-w-[700px]" delay={160}>
+      <Reveal className="mx-auto mt-14 max-w-[700px]" delay={240}>
         <ContactForm locale={locale} dict={dict} services={services} />
       </Reveal>
     </Section>
@@ -305,6 +510,8 @@ export function FooterLine({ locale, dict }: { locale: Locale; dict: Dictionary 
   const navLinks = [
     { href: localeHref(locale, 'work'), label: dict.nav.work },
     { href: localeHref(locale, 'about'), label: dict.nav.about },
+    /* The case studies are a home-page section, not a route of their own. */
+    { href: `${localeHref(locale)}#case-studies`, label: dict.nav.caseStudies },
     { href: localeHref(locale, 'services'), label: dict.nav.services },
     { href: localeHref(locale, 'contact'), label: dict.nav.contact },
     { href: localeHref(locale, 'privacy'), label: dict.privacy.title },
@@ -330,20 +537,6 @@ export function FooterLine({ locale, dict }: { locale: Locale; dict: Dictionary 
           ))}
         </ul>
       </nav>
-
-      <ul role="list" className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-        {socialLinks.map((link) => (
-          <li key={link.key}>
-            <a
-              href={link.href}
-              {...(link.key === 'email' ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
-              className="ltr-island text-[13px] text-ink-3 underline-offset-4 hover:text-ink hover:underline"
-            >
-              {link.handle}
-            </a>
-          </li>
-        ))}
-      </ul>
 
       <p className="mt-6 text-[13px] text-ink-3">{dict.footer.tagline}</p>
     </footer>

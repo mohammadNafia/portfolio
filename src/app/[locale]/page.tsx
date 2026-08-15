@@ -1,29 +1,33 @@
 import { notFound } from 'next/navigation';
 import { isLocale } from '@/i18n/config';
 import { getDictionary } from '@/i18n';
-import { projects, featuredProjects, archiveProjects } from '@/content';
+import { projects } from '@/content';
 import { Hero } from '@/components/home/Hero';
 import { Sawtooth } from '@/components/ui/Section';
 import {
-  WorkGallery,
+  SelectedWork,
   Background,
-  Proof,
-  StackMarquee,
+  HowIWork,
+  Results,
+  Technologies,
   CaseStudies,
   ArchiveStrip,
   WorkWithMe,
 } from '@/components/home/sections';
 
 /**
- * Canonical page order from the system's section recipes:
- *   nav pill · hero · sawtooth · work gallery · BACKGROUND · proof ·
- *   stack marquee · CASE STUDIES · archive · WORK WITH ME · footer
+ * Section order is the copy document's order, not a layout preference:
+ *   nav pill · hero · SELECTED WORK · BACKGROUND (+ résumé) · HOW I WORK ·
+ *   RESULTS & MILESTONES · TECHNOLOGIES · CASE STUDIES · ARCHIVE ·
+ *   WORK WITH ME · footer
  *
- * A sawtooth sits at every background change — never a straight line. The
- * tone passed to each `Sawtooth` is the colour of the section *below* it.
+ * The tone alternates bg → alt at every step so no two neighbouring sections
+ * share a ground, and a sawtooth sits at every one of those changes — never a
+ * straight line. The tone passed to each `Sawtooth` is the colour of the
+ * section *below* it.
  *
- * The hero → work seam is the exception: there the divider is the work
- * gallery's own first child, because that section has to climb over a hero that
+ * The hero → work seam is the exception: there the divider is the selected-work
+ * section's own first child, because that section has to climb over a hero that
  * lags behind it. See `.after-hero` and motion.md → "Hero overlay scroll".
  */
 export default async function HomePage({
@@ -56,25 +60,30 @@ export default async function HomePage({
       <Hero locale={locale} dict={dict} projects={fanOrder} />
 
       {/* Its sawtooth is inside it — see the note above. */}
-      <WorkGallery projects={projects} locale={locale} dict={dict} />
+      <SelectedWork projects={projects} locale={locale} dict={dict} />
       <Sawtooth tone="alt" />
 
-      <Background locale={locale} dict={dict} />
+      <Background dict={dict} />
       <Sawtooth tone="bg" />
 
-      <Proof dict={dict} />
+      <HowIWork dict={dict} />
       <Sawtooth tone="alt" />
 
-      <StackMarquee dict={dict} />
+      <Results dict={dict} />
       <Sawtooth tone="bg" />
 
-      <CaseStudies projects={featuredProjects} locale={locale} dict={dict} />
+      <Technologies dict={dict} />
       <Sawtooth tone="alt" />
 
-      <ArchiveStrip projects={archiveProjects} locale={locale} dict={dict} />
+      <CaseStudies projects={projects} locale={locale} dict={dict} />
       <Sawtooth tone="bg" />
+
+      <ArchiveStrip projects={projects} locale={locale} dict={dict} />
+      <Sawtooth tone="alt" />
 
       <WorkWithMe locale={locale} dict={dict} />
+      {/* The footer sits on `--bg`, so the last alt section needs its own cut. */}
+      <Sawtooth tone="bg" />
     </>
   );
 }

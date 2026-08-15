@@ -12,7 +12,7 @@
 export const sendy = {
   slug: 'sendy',
   title: 'Sendy',
-  titleLocalized: { en: 'Sendy', ar: 'ساندي' },
+  titleLocalized: { en: 'Sendy', ar: 'سندي' },
   category: 'saas' as const,
   categoryLabel: {
     en: 'Multi-tenant commerce & logistics SaaS',
@@ -27,11 +27,11 @@ export const sendy = {
   status: { en: 'In production · Pilot merchants', ar: 'في الإنتاج · تجّار تجريبيون' },
   headline: {
     en: 'Iraqi merchants were running a whole business across a notebook, a chat app and three delivery companies. Sendy puts the entire operation in one system.',
-    ar: 'كان التاجر العراقي يدير عمله كاملاً بين دفتر ورقي وتطبيق محادثة وثلاث شركات توصيل. ساندي يجمع العملية بالكامل في نظام واحد.',
+    ar: 'كان التاجر العراقي يدير عمله كاملاً بين دفتر ورقي وتطبيق محادثة وثلاث شركات توصيل. سندي يجمع العملية بالكامل في نظام واحد.',
   },
   summary: {
     en: 'Sendy is a multi-tenant SaaS platform where a merchant runs orders, customers, products, inventory, warehouses, storefronts, delivery, drivers, payments, expenses, subscriptions and analytics from one dashboard. I founded it, shaped the product, and build the frontend platform alongside the backend team.',
-    ar: 'ساندي منصة SaaS متعددة المستأجرين يدير فيها التاجر الطلبات والعملاء والمنتجات والمخزون والمخازن والمتاجر الإلكترونية والتوصيل والسائقين والمدفوعات والمصاريف والاشتراكات والتحليلات من لوحة واحدة. أسّستُ المشروع، وصمّمتُ المنتج، وأبني منصة الواجهة الأمامية بالتعاون مع فريق الخادم.',
+    ar: 'سندي منصة SaaS متعددة المستأجرين يدير فيها التاجر الطلبات والعملاء والمنتجات والمخزون والمخازن والمتاجر الإلكترونية والتوصيل والسائقين والمدفوعات والمصاريف والاشتراكات والتحليلات من لوحة واحدة. أسّستُ المشروع، وصمّمتُ المنتج، وأبني منصة الواجهة الأمامية بالتعاون مع فريق الخادم.',
   },
   problem: {
     en: 'A merchant in Baghdad typically tracks orders in a notebook or a spreadsheet, takes them over Instagram or WhatsApp, hands delivery to two or three separate companies, and only discovers what an order actually cost after it is finished. Nothing reconciles. Inventory drifts. Nobody can answer "did this month make money?" without a manual audit.',
@@ -104,6 +104,15 @@ export const sendy = {
   featured: true,
   tier: 1 as const,
   cover: 'sendy-orders' as const,
+  heroImage: {
+    src: '/img/hero-sendy.webp',
+    width: 1125,
+    height: 851,
+    alt: {
+      en: 'Two tablets at an angle: the Sendy storefront on one, the merchant orders table on the other.',
+      ar: 'جهازان لوحيان بزاوية: واجهة متجر سندي على أحدهما، وجدول طلبات التاجر على الآخر.',
+    },
+  },
   proof: {
     en: 'Founded and engineered · Tested with pilot merchants',
     ar: 'تأسيس وهندسة · مُختبر مع تجّار تجريبيين',
@@ -112,11 +121,11 @@ export const sendy = {
   seo: {
     title: {
       en: 'Sendy — Multi-tenant commerce & logistics SaaS for Iraqi merchants',
-      ar: 'ساندي — منصة تجارة ولوجستيات متعددة المستأجرين للتجّار العراقيين',
+      ar: 'سندي — منصة تجارة ولوجستيات متعددة المستأجرين للتجّار العراقيين',
     },
     description: {
       en: 'How I founded and engineered Sendy: a multi-tenant commerce and logistics platform bringing orders, inventory, storefronts, delivery, payments and analytics into one Arabic-first system.',
-      ar: 'كيف أسّستُ وهندستُ ساندي: منصة تجارة ولوجستيات متعددة المستأجرين تجمع الطلبات والمخزون والمتاجر والتوصيل والمدفوعات والتحليلات في نظام واحد يبدأ بالعربية.',
+      ar: 'كيف أسّستُ وهندستُ سندي: منصة تجارة ولوجستيات متعددة المستأجرين تجمع الطلبات والمخزون والمتاجر والتوصيل والمدفوعات والتحليلات في نظام واحد يبدأ بالعربية.',
     },
   },
   chapters: [
@@ -127,8 +136,8 @@ export const sendy = {
         {
           type: 'lead' as const,
           text: {
-            en: 'Sendy did not start from a technology idea. It started from watching how much of an Iraqi merchant’s day is spent moving the same information between systems that do not talk to each other.',
-            ar: 'لم يبدأ ساندي من فكرة تقنية، بل من ملاحظة كم من يوم التاجر العراقي يُستهلك في نقل المعلومة نفسها بين أنظمة لا تتحدّث مع بعضها.',
+            en: 'Sendy did not start from a technology idea. It started from watching how much of an Iraqi merchant’s day is spent moving the same information between systems that do not talk to each other. It is live today at [sendyiq.com](https://sendyiq.com).',
+            ar: 'لم يبدأ سندي من فكرة تقنية، بل من ملاحظة كم من يوم التاجر العراقي يُستهلك في نقل المعلومة نفسها بين أنظمة لا تتحدّث مع بعضها. والمنصة تعمل اليوم على [sendyiq.com](https://sendyiq.com).',
           },
         },
         {
@@ -163,7 +172,7 @@ export const sendy = {
           type: 'prose' as const,
           text: {
             en: 'Sendy is not a single-persona product. Seven distinct roles touch the same order record from different angles, and each needs a different amount of the system exposed to them.',
-            ar: 'ساندي ليس منتجاً لشخصية واحدة. سبعة أدوار مختلفة تتعامل مع سجل الطلب نفسه من زوايا مختلفة، ويحتاج كل دور إلى قدر مختلف من النظام.',
+            ar: 'سندي ليس منتجاً لشخصية واحدة. سبعة أدوار مختلفة تتعامل مع سجل الطلب نفسه من زوايا مختلفة، ويحتاج كل دور إلى قدر مختلف من النظام.',
           },
         },
         {
@@ -224,7 +233,7 @@ export const sendy = {
           id: 'sendy-orders' as const,
           caption: {
             en: 'Interface concept — the order workspace. Composed from Sendy’s real module structure; not a captured screenshot of the production platform.',
-            ar: 'تصوّر للواجهة — مساحة عمل الطلبات. مبني على البنية الفعلية لوحدات ساندي، وليس لقطة شاشة من المنصة في الإنتاج.',
+            ar: 'تصوّر للواجهة — مساحة عمل الطلبات. مبني على البنية الفعلية لوحدات سندي، وليس لقطة شاشة من المنصة في الإنتاج.',
           },
         },
         {
@@ -258,7 +267,7 @@ export const sendy = {
           type: 'prose' as const,
           text: {
             en: 'Sendy is Arabic-first. That is a structural decision, not a translation task. The default direction is RTL, the default language is Arabic, and the English interface is the mirrored variant — which is the opposite of how most platforms in the region are built, and it changes how every layout is authored.',
-            ar: 'ساندي عربي أولاً. هذا قرار بنيوي لا مهمة ترجمة. الاتجاه الافتراضي RTL واللغة الافتراضية العربية، والواجهة الإنجليزية هي النسخة المعكوسة — وهو عكس ما تُبنى عليه معظم منصات المنطقة، ويغيّر طريقة كتابة كل تخطيط.',
+            ar: 'سندي عربي أولاً. هذا قرار بنيوي لا مهمة ترجمة. الاتجاه الافتراضي RTL واللغة الافتراضية العربية، والواجهة الإنجليزية هي النسخة المعكوسة — وهو عكس ما تُبنى عليه معظم منصات المنطقة، ويغيّر طريقة كتابة كل تخطيط.',
           },
         },
         {
@@ -499,7 +508,7 @@ export const sendy = {
           type: 'prose' as const,
           text: {
             en: 'The most useful thing Sendy taught me is that operational software is judged on the day something goes wrong, not the day it is demoed. A merchant does not care that the dashboard is elegant if a delivery provider times out and the order is stuck in a state nobody can explain. Most of the engineering effort that matters went into the unglamorous half — permission checks, error states, reconciliation, and making failure legible.',
-            ar: 'أهم ما علّمني إياه ساندي أن البرمجيات التشغيلية تُقيَّم يوم يحدث خطأ، لا يوم العرض. لا يهم التاجر أن تكون اللوحة أنيقة إذا انقطع مزوّد التوصيل وعلق الطلب في حالة لا يفسّرها أحد. معظم الجهد الهندسي المهم ذهب إلى النصف غير البرّاق — فحوص الصلاحيات، وحالات الخطأ، والمطابقة، وجعل الفشل مقروءاً.',
+            ar: 'أهم ما علّمني إياه سندي أن البرمجيات التشغيلية تُقيَّم يوم يحدث خطأ، لا يوم العرض. لا يهم التاجر أن تكون اللوحة أنيقة إذا انقطع مزوّد التوصيل وعلق الطلب في حالة لا يفسّرها أحد. معظم الجهد الهندسي المهم ذهب إلى النصف غير البرّاق — فحوص الصلاحيات، وحالات الخطأ، والمطابقة، وجعل الفشل مقروءاً.',
           },
         },
         {

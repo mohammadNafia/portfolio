@@ -20,7 +20,7 @@ export default function NotFound() {
       <div className="pt-[clamp(120px,15vh,168px)]" />
 
       <Section tone="alt" grain>
-        <SecHead title={dict.notFound.code} intro={dict.notFound.text} />
+        <SecHead as="h1" title={dict.notFound.code} intro={dict.notFound.text} />
 
         <Reveal className="mt-10 flex flex-wrap justify-center gap-3" delay={160}>
           <Button variant="dark" href={localeHref(locale, 'work')}>

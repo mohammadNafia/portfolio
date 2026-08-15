@@ -26,7 +26,7 @@ originates anywhere other than this list.**
   2nd place, HUB200 Hackathon 2025, Global Entrepreneurship Week (Dynamic Form Builder);
   selected for the Iraqi Young Leaders Exchange Program (IYLEP), United States.
 - **Training** — Iraq TechSchool, six-month software engineering programme, in collaboration
-  with QiCard, Digital Zone, Computiq and HUB200.
+  with Qi Card, Digital Zone, Computiq and HUB200.
 - **Employment** — Sendy, Mid-Level Full-Stack Developer (part-time), March 2026–present,
   and founder of the project. Freelance full-stack developer and technical project
   coordinator since 2024.

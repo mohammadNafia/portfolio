@@ -45,11 +45,27 @@ jobs:
       # Guards the loader contract: `src/lib/image-variants.ts` is generated,
       # and a committed copy that disagrees with the sources would let the
       # loader emit URLs for files that were never written.
+      #
+      # Compares the generated manifest byte-for-byte (it is plain text, and
+      # deterministic) but `public/img` only by which files exist. Image
+      # encoders are NOT byte-reproducible across platforms — the same og.png
+      # comes out 118939 bytes from sharp on Windows and 118473 on this
+      # runner — so comparing content here fails on every PR regardless of
+      # whether anything is actually stale.
       - name: Image variants are in sync
         run: |
           npm run images
-          git diff --exit-code --stat -- src/lib/image-variants.ts public/img \
-            || (echo "::error::public/img or image-variants.ts is stale — run 'npm run images' and commit the result" && exit 1)
+
+          git diff --exit-code -- src/lib/image-variants.ts \
+            || { echo "::error::src/lib/image-variants.ts is stale — run 'npm run images' and commit it"; exit 1; }
+
+          git add -A public/img
+          MISSING=$(git diff --no-renames --cached --name-status -- public/img | grep -E '^[AD]' || true)
+          if [ -n "$MISSING" ]; then
+            echo "::error::public/img is missing files the generator produces — run 'npm run images' and commit the result"
+            echo "$MISSING"
+            exit 1
+          fi
 
       - name: Build
         run: npm run build

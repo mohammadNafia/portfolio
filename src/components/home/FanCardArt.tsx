@@ -289,6 +289,47 @@ export function FanCardArt({
           </div>
         );
 
+      /*
+       * Virtual Banking — a wallet on a phone: the card, the three actions
+       * under it, and the transaction rows below.
+       *
+       * Keyed on the slug as well as the showcase id, because the work grid,
+       * the hero fan and the archive all draw this project with no `variant`
+       * and would otherwise fall through to the request lifecycle below — the
+       * face it carried while the case study was described as backend-only.
+       */
+      case 'virtual-banking':
+      case 'generic-wallet':
+        return (
+          <div className="flex h-full w-full items-center justify-center">
+            <div className="flex h-full w-[46%] flex-col gap-2 rounded-image bg-surface p-2">
+              {/* The card: the one strong accent block on the face. */}
+              <span
+                className="block h-[30%] w-full shrink-0 rounded-image"
+                style={{ backgroundColor: accent }}
+              />
+              <div className="flex shrink-0 gap-1.5">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="h-3 flex-1 rounded-[4px]"
+                    style={{
+                      backgroundColor:
+                        i === 0 ? `color-mix(in srgb, ${accent} 45%, #ffffff)` : 'rgba(17,17,17,.10)',
+                    }}
+                  />
+                ))}
+              </div>
+              {[0, 1, 2].map((row) => (
+                <div key={row} className={row_}>
+                  <span className="h-2 w-2 shrink-0 rounded-pill bg-[rgba(17,17,17,.14)]" />
+                  {bar(`${58 - row * 9}%`)}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
       /* Backend projects — a request and its states. */
       default:
         return (

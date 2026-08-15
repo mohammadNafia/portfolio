@@ -1,17 +1,18 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { isLocale, localeHref, locales, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n';
+import { pageMetadata } from '@/lib/metadata';
 import { getProject, getNextProject, projects } from '@/content';
-import { site } from '@/lib/site';
 import { Section, SecHead, Sawtooth, Tag, Squiggle } from '@/components/ui/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { Button } from '@/components/ui/Button';
 import { FanCardArt } from '@/components/home/FanCardArt';
 import { BlockRenderer } from '@/components/case-study/Blocks';
 import { ChapterNav } from '@/components/case-study/ChapterNav';
-import { CreativeWorkSchema } from '@/components/seo/StructuredData';
+import { CaseStudySchema, BreadcrumbSchema } from '@/components/seo/StructuredData';
 
 export function generateStaticParams() {
   return locales.flatMap((locale) => projects.map((project) => ({ locale, slug: project.slug })));
@@ -27,25 +28,20 @@ export async function generateMetadata({
   const project = getProject(slug);
   if (!project) return {};
 
-  return {
+  /*
+   * `pageMetadata` carries the openGraph and twitter blocks that used to be
+   * spelled out here. They cannot be omitted: Next.js replaces the parent's
+   * `openGraph` object wholesale instead of merging into it, so a case study
+   * with no block of its own loses og:image entirely and announces the generic
+   * portfolio title when shared. That is also why the other five routes now go
+   * through the same helper — they were still inheriting the homepage's card.
+   */
+  return pageMetadata({
+    locale,
+    path: `work/${slug}`,
     title: project.seo.title[locale],
     description: project.seo.description[locale],
-    alternates: {
-      canonical: localeHref(locale, `work/${slug}`),
-      languages: {
-        en: `/en/work/${slug}`,
-        ar: `/ar/work/${slug}`,
-        'x-default': `/en/work/${slug}`,
-      },
-    },
-    openGraph: {
-      type: 'article',
-      title: project.seo.title[locale],
-      description: project.seo.description[locale],
-      url: `${site.url}${localeHref(locale, `work/${slug}`)}`,
-      locale: locale === 'ar' ? 'ar_IQ' : 'en_US',
-    },
-  };
+  });
 }
 
 /**
@@ -76,7 +72,14 @@ export default async function CaseStudyPage({
 
   return (
     <div style={{ ['--accent' as string]: project.accent }}>
-      <CreativeWorkSchema project={project} locale={locale} />
+      <CaseStudySchema project={project} locale={locale} />
+      <BreadcrumbSchema
+        locale={locale}
+        trail={[
+          { name: dict.nav.work, path: 'work' },
+          { name: project.titleLocalized[locale], path: `work/${project.slug}` },
+        ]}
+      />
 
       {/* --------------------------------------------------------- Hero */}
       <header className="relative grain bg-bg-alt px-[var(--pad-x)] pb-0 pt-[clamp(120px,15vh,168px)]">
@@ -93,14 +96,54 @@ export default async function CaseStudyPage({
             </p>
           </Reveal>
 
+          {/*
+            Two heroes, and the difference is not cosmetic.
+
+            A supplied export renders at ITS OWN ratio — `width`/`height` come
+            off the file, never off the slot — because the four that exist are
+            16:9, 4:3, ~4:3 and 1:1, and forcing any of them into one box means
+            either cropping a quarter of the picture away or stretching it. The
+            coded `cover` composition keeps the fixed 16:9 it was drawn for.
+
+            The card chrome goes too. Every export is a presentation render that
+            arrives with its own background and its own drop shadow already
+            baked into the pixels, so `bg-surface` would sit behind an opaque
+            image and `--shadow-card` would be a second shadow under the first.
+            Only the radius survives, so the corners still match the site.
+          */}
           <Reveal className="mt-10" delay={80}>
-            <div className="overflow-hidden rounded-image bg-surface shadow-[var(--shadow-card)]">
-              <div className="aspect-[16/9]">
-                <FanCardArt project={project} variant={project.cover} />
+            {project.heroImage ? (
+              <Image
+                src={project.heroImage.src}
+                width={project.heroImage.width}
+                height={project.heroImage.height}
+                alt={project.heroImage.alt[locale]}
+                /*
+                 * The hero is the LCP element on every case study, so it is
+                 * fetched at once rather than lazily. `sizes` describes the
+                 * real box: the full viewport until the shell stops growing,
+                 * and 1080px after that.
+                 */
+                priority
+                sizes="(max-width: 1176px) 100vw, 1080px"
+                className="h-auto w-full rounded-image"
+              />
+            ) : (
+              <div className="overflow-hidden rounded-image bg-surface shadow-[var(--shadow-card)]">
+                <div className="aspect-[16/9]">
+                  <FanCardArt project={project} variant={project.cover} />
+                </div>
               </div>
-            </div>
+            )}
             <p className="mx-auto mt-4 max-w-[68ch] text-[13px] leading-relaxed text-ink-3">
-              {dict.caseStudy.conceptNotice}
+              {/*
+                The standing notice says these interfaces are "not screenshots
+                of production systems", which stays true of the coded
+                compositions and would be a lie printed under a photograph of
+                real product UI. A page with an export gets a notice that
+                describes both things on it.
+              */}
+              {project.heroImage ? dict.caseStudy.mockupNotice : dict.caseStudy.conceptNotice}
             </p>
           </Reveal>
 
@@ -154,6 +197,43 @@ export default async function CaseStudyPage({
                 </li>
               ))}
             </ul>
+          </Reveal>
+
+          {/*
+            Every project already carried a `services` array in its content and
+            nothing rendered it, so the case studies — by far the most
+            substantial pages on the site — had no link to /services at all.
+            Traffic could arrive at a detailed write-up of the exact work
+            somebody wanted to buy and find no path to the page that sells it,
+            only prev/next and the footer. This is that path, and it is also
+            what tells a crawler which studies support which service.
+          */}
+          <Reveal delay={280} className="mt-8">
+            <h2 className="text-[13px] font-semibold text-ink-3">{dict.caseStudy.services}</h2>
+            <ul role="list" className="mt-3 flex flex-wrap gap-2">
+              {project.services.map((service) => (
+                <li key={service.en}>
+                  <Link
+                    href={localeHref(locale, 'services')}
+                    className="block rounded-pill bg-surface px-3 py-1.5 text-[13px] font-medium text-ink-2 transition-colors duration-[var(--dur-link)] hover:bg-ink hover:text-bg"
+                  >
+                    {service[locale]}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+
+          <Reveal delay={320} className="mt-8">
+            <Link
+              href={localeHref(locale, 'work')}
+              className="text-[13px] font-semibold text-accent underline-offset-4 hover:underline"
+            >
+              <span aria-hidden="true" className="rtl:-scale-x-100">
+                ←
+              </span>{' '}
+              {dict.common.backToWork}
+            </Link>
           </Reveal>
         </div>
       </Section>

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { globSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import path from 'node:path';
 import { projects, featuredProjects, archiveProjects, getProject, getNextProject } from '@/content';
 import { locales } from '@/i18n/config';
 import { showcaseSchema } from '@/content/schema';
@@ -104,6 +104,30 @@ describe('honesty constraints', () => {
 
 describe('dictionary completeness', () => {
   /**
+   * Prose arrays whose two locales are allowed to hold a different number of
+   * paragraphs.
+   *
+   * Everywhere else, a length mismatch is a missing translation and the test
+   * below is what catches it. These are the exception: the home page was
+   * authored twice rather than translated once, and the same argument is split
+   * into a different number of paragraphs on each side — the Arabic Background
+   * runs five where the English runs six, and the Arabic results section
+   * deliberately carries no support line at all.
+   *
+   * Structure is still enforced inside them: every element is compared for
+   * shape, only the count is exempt. Anything nested under a listed path — the
+   * `items` array of a section, say — is *not* exempt, because these are exact
+   * paths, not prefixes.
+   */
+  const PROSE_LENGTH_MAY_DIFFER = new Set([
+    'dict.home.background.paragraphs',
+    'dict.home.results.note',
+    'dict.home.process.steps[3].text',
+    'dict.home.cases.items[0].paragraphs',
+    'dict.home.cases.items[2].paragraphs',
+  ]);
+
+  /**
    * The Arabic dictionary is type-checked for shape, but array *lengths* are
    * widened by the type. This asserts they match item for item.
    */
@@ -116,8 +140,17 @@ describe('dictionary completeness', () => {
           problems.push(`${path}: array/non-array mismatch`);
           return;
         }
-        if (a.length !== b.length) {
+        if (a.length !== b.length && !PROSE_LENGTH_MAY_DIFFER.has(path)) {
           problems.push(`${path}: length ${a.length} (en) vs ${b.length} (ar)`);
+          return;
+        }
+        if (a.length !== b.length) {
+          /* Exempt: nothing to pair up, and every element is a bare string. */
+          for (const [index, item] of [...a, ...b].entries()) {
+            if (typeof item !== 'string') {
+              problems.push(`${path}[${index}]: exempt paths may only hold strings`);
+            }
+          }
           return;
         }
         a.forEach((item, index) => compare(item, b[index], `${path}[${index}]`));
@@ -264,7 +297,14 @@ describe('stylesheet hygiene', () => {
    * a font size in a bare `var()`, and silently drops the declaration.
    */
   it('never uses a bare var() in an arbitrary text utility', () => {
-    const sources = globSync('src/**/*.tsx');
+    /*
+     * `readdirSync({ recursive })` rather than `fs.globSync`, which only
+     * arrived in Node 22 — this package supports >=20.9.0, and CI runs 20, so
+     * globSync passed locally and threw there.
+     */
+    const sources = readdirSync('src', { recursive: true, encoding: 'utf8' })
+      .filter((entry) => entry.endsWith('.tsx'))
+      .map((entry) => path.join('src', entry));
     const offenders = sources.filter((file) =>
       /text-\[var\(/.test(readFileSync(file, 'utf8')),
     );

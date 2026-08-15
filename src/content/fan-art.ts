@@ -41,7 +41,7 @@ export const fanArt: Record<string, FanArt> = {
     src: '/img/fan-4.webp',
     alt: {
       en: 'Sendy — the merchant console: order counts by state, the delivery status history and the live order table, in Arabic.',
-      ar: 'ساندي — لوحة التاجر: أعداد الطلبات حسب الحالة، سجل حالات التوصيل وجدول الطلبات الحيّ.',
+      ar: 'سندي — لوحة التاجر: أعداد الطلبات حسب الحالة، سجل حالات التوصيل وجدول الطلبات الحيّ.',
     },
   },
   immar: {

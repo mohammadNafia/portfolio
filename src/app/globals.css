@@ -41,7 +41,7 @@
    * uses — 5.3:1 on --bg, 4.7:1 on --surface, 5.3:1 for white-on-accent.
    *
    * --accent-bright (#0B8DF8) is the recognisable brand blue, reserved for
-   * TEXT-FREE graphics: the carousel chevron's disc, glows, bullet marks. Those
+   * TEXT-FREE graphics: bullet marks, discs, glows. Those
    * fall under the 3:1 non-text threshold, which its 3.4:1 clears.
    *
    * Never put a label on --accent-bright.
@@ -299,11 +299,31 @@
   /*
    * Arabic has no case, and tracking breaks joining. The "shouty" effect comes
    * from the display face, the size and the squiggle — never from fake casing.
+   *
+   * Arabic display type is IBM Plex Sans Arabic, NOT Handjet. Handjet ships an
+   * Arabic and the pixel identity was meant to carry across both scripts, but
+   * it failed QA on device: see the note in design-tokens.md. The failure is
+   * not size-dependent — it reproduces identically at 46px and 57.6px, well
+   * above Handjet's documented 26px floor — so the size ramp is unchanged and
+   * only the face swaps. Latin keeps Handjet.
    */
   [dir='rtl'] .pixel-title {
+    font-family: var(--font-arabic);
+    /* ELGR/ELSH are Handjet axes; Plex has neither and inherits garbage. */
+    font-variation-settings: normal;
     letter-spacing: 0;
     text-transform: none;
     line-height: 1.35;
+  }
+
+  /*
+   * Latin digits inside an RTL page. The Arabic display swap above targets
+   * joined script, which Handjet renders badly; numerals it renders fine, so
+   * they keep the pixel face and the identity survives on the Arabic site.
+   */
+  [dir='rtl'] .pixel-num {
+    font-family: var(--font-display);
+    font-variation-settings: 'ELGR' 1, 'ELSH' 0;
   }
 
   .squiggle {
@@ -407,18 +427,64 @@
   }
 
   /* ---- Marquee --------------------------------------------------------- */
+  /*
+   * The edge treatment is a fade, never a cut.
+   *
+   * It used to read as a cut, and the mask was only half the reason. The old
+   * ramp reached full opacity at 8% — at 1440 that is 86px, about half a token —
+   * so a name entering the frame went from invisible to solid inside its own
+   * width and the eye read the transition as a slice through the letterforms.
+   * The ramp is 16% now, and it starts at `transparent` in the *token's* colour
+   * rather than the keyword: `transparent` is rgba(0,0,0,0) and interpolating a
+   * colour to it in sRGB darkens the midpoint, which put a grey bruise over the
+   * fade and sharpened the apparent edge further.
+   *
+   * The gradient is symmetric, so it needs no RTL variant: both edges get the
+   * same ramp whichever way the track travels.
+   */
   .marquee {
     overflow: hidden;
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    /*
+     * A length, not a bare percentage. 16% of a 1240px row is a 198px ramp and
+     * reads as a fade; 16% of a 350px phone row is 56px — narrower than a single
+     * token — so a name still had most of its opacity when the edge reached it
+     * and was sliced through the middle. The clamp holds the ramp at 88px on a
+     * phone — about two thirds of a token, measured — and lets it grow to 160px
+     * on the wide shell.
+     */
+    --marquee-fade: clamp(88px, 16%, 160px);
+    -webkit-mask-image: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0) 0,
+      rgb(0, 0, 0) var(--marquee-fade),
+      rgb(0, 0, 0) calc(100% - var(--marquee-fade)),
+      rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0) 0,
+      rgb(0, 0, 0) var(--marquee-fade),
+      rgb(0, 0, 0) calc(100% - var(--marquee-fade)),
+      rgba(0, 0, 0, 0) 100%
+    );
   }
 
+  /*
+   * The loop is a 50% translate over a track duplicated end to end, which is
+   * only seamless if the two halves are *exactly* equal. A `gap` on the track
+   * is not: N items carry N-1 gaps, so half the track came up half a gap short
+   * and the loop jumped 36px every 32 seconds. The spacing lives on the items
+   * instead, where every one of them carries exactly one.
+   */
   .marquee__track {
     display: flex;
-    gap: 72px;
     align-items: center;
     width: max-content;
     animation: marquee 32s linear infinite;
+  }
+
+  .marquee__track > * {
+    padding-inline-end: 72px;
   }
 
   .marquee:hover .marquee__track {
@@ -509,10 +575,24 @@
     margin: 0;
   }
 
+  /*
+   * 0.10em, not the 0.14em this line used to carry. The old headline ended on
+   * "&", so nothing after the tracking had to hold together as a word. This one
+   * ends on "AI", and at 0.14em the pair reads as two loose initials — "A I" —
+   * instead of a unit. 0.10em is the point where AI closes up and the line still
+   * reads as tracked display type.
+   *
+   * The negative inline-end margin cancels the trailing letter-space. Tracking
+   * is added *after* every glyph including the last, so the span box carries a
+   * 0.10em tail of nothing on its right; centring the box therefore parks the
+   * ink half that tail left of centre, and the two tiers visibly disagree about
+   * where the middle is. Removing the tail centres ink against ink.
+   */
   .hero__line1 {
     font-size: clamp(28px, 3.4vw, 46px);
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.1em;
+    margin-inline-end: -0.1em;
     text-transform: uppercase;
     line-height: 1.1;
     color: var(--color-ink);
@@ -528,27 +608,69 @@
 
   .hero__sub {
     margin: 20px auto 0;
-    max-width: 640px;
+    /* 700, not 640: the intro is three lines of copy and 640 stranded its last
+       word on a line of its own at desktop widths. */
+    max-width: 700px;
     font-size: 17px;
     color: var(--color-ink-2);
     animation: rise-in 650ms var(--ease-out) 100ms both;
   }
 
-  /* Arabic: no tracking, no fake casing, more leading. */
+  /*
+   * ---- The Arabic lockup is the Latin ramp × 0.85, on both tiers -----------
+   *
+   * Not a taste call. Plex Arabic puts ~1.24× the ink height of Handjet on the
+   * page for the same font-size — measured, and constant at every width —
+   * because Handjet spends most of its em on a pixel grid with air in it while
+   * Plex fills the body with solid stroke. Matching the two locales on px
+   * therefore mismatches them on the page, and the Arabic reads as the louder
+   * of the two. 0.85 lands the display tiers within ~6% of each other.
+   *
+   * Both tiers, in step, because the ratio between them is load-bearing. Latin
+   * separates the tiers twice over — by size *and* by face, Poppins against the
+   * pixel Handjet — so it can carry the hierarchy even where the sizes are
+   * close. Arabic has no second face (see the note on .pixel-title for why
+   * Handjet's Arabic is out), so size is the only signal, and scaling one tier
+   * without the other spends the little contrast there is. At 0.85 on both, the
+   * Arabic tier ratio tracks Latin's to within 0.02 at 390/768/1440.
+   *
+   * It matters more since the display line became `مهندس` — five letters
+   * against ENGINEER's eight, so excess size has nowhere to hide and goes
+   * straight into stroke weight instead of line length.
+   *
+   * Also here: no tracking, no fake casing, more leading. No tracking means no
+   * trailing letter-space either, so the Latin centring compensation has to go
+   * with it — left in, it would pull the line off-centre by the exact amount it
+   * was meant to correct.
+   */
   [dir='rtl'] .hero__line1 {
+    font-size: clamp(24px, 2.9vw, 39px);
     letter-spacing: 0;
+    margin-inline-end: 0;
     text-transform: none;
     line-height: 1.35;
   }
 
+  /* Face swap as .pixel-title — see the note there. */
   [dir='rtl'] .hero__line2 {
+    font-family: var(--font-arabic);
+    font-variation-settings: normal;
+    font-weight: 700;
+    font-size: clamp(40px, 6.4vw, 88px);
     letter-spacing: 0;
-    line-height: 1.35;
+    line-height: 1.3;
   }
 
   @media (max-width: 420px) {
     .hero__line2 {
       font-size: clamp(34px, 12vw, 46px);
+    }
+
+    /* Restated, not inherited: `[dir='rtl'] .hero__line2` outranks the rule
+     * above on specificity, so without this the Arabic would keep its desktop
+     * clamp through the whole mobile branch. Same × 0.85. */
+    [dir='rtl'] .hero__line2 {
+      font-size: clamp(29px, 10.2vw, 40px);
     }
   }
 
@@ -651,7 +773,9 @@
     justify-content: space-between;
     gap: 12px;
     height: 56px;
-    width: 260px;
+    /* Collapsed: avatar + locale switch + CTA. The locale switch is permanent,
+       so the collapsed width has to carry it — 260px cut into the CTA. */
+    width: 312px;
     padding: 6px 6px 6px 10px;
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(14px);
@@ -667,7 +791,7 @@
   }
 
   .nav-pill[data-expanded='true'] {
-    width: 560px;
+    width: 612px;
   }
 
   /* Arabic runs longer — size the expanded pill to content instead. */
@@ -735,6 +859,45 @@
     font-weight: 600;
   }
 
+  /*
+    Locale switch — a fixture of the pill, never part of the collapsible group.
+    `flex: none` so it survives the pill's width transition intact, and a 40px
+    box so it clears the touch-target floor on the phone where it matters most.
+  */
+  .nav-pill__locale {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    min-width: 40px;
+    height: 40px;
+    padding-inline: 10px;
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    color: var(--color-ink-2);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transition:
+      background var(--dur-btn),
+      color var(--dur-link);
+  }
+
+  .nav-pill__locale:hover {
+    background: var(--color-bg-alt);
+    color: var(--color-ink);
+  }
+
+  .nav-pill__locale:active {
+    transform: scale(0.96);
+  }
+
+  /* Arabic's single glyph sits small next to a two-letter "EN" — nudge it up. */
+  .nav-pill__locale[lang='ar'] {
+    font-size: 17px;
+  }
+
   .nav-pill__cta {
     display: inline-flex;
     align-items: center;
@@ -762,11 +925,16 @@
     transform: scale(0.96);
   }
 
-  /* Mobile: stays collapsed, links drop out, CTA remains. */
+  /*
+    Mobile: stays collapsed, links drop out, locale switch and CTA remain.
+    Only the link group is allowed to disappear here — the locale switch is the
+    site's one non-negotiable control and has no other home on a phone.
+  */
   @media (max-width: 760px) {
     .nav-pill,
     .nav-pill[data-expanded='true'] {
       width: auto;
+      max-width: calc(100vw - 24px);
       gap: 10px;
     }
 
@@ -795,172 +963,50 @@
     color: #fff;
   }
 
-  /* ---- Gallery grid ---------------------------------------------------- */
+  /* ---- Selected-work grid ---------------------------------------------- */
+  /*
+   * Two columns, not three: each cell carries a paragraph of copy under its
+   * cover, so a third column would put the whole section's prose in ~300px
+   * measures. The cell is a bare slot — the card inside it is the site's
+   * `.case-card`, the same one the work index and the archive use.
+   */
+  /*
+   * No `isolation: isolate` and no stacking games: every cell is an ordinary
+   * grid item drawn in flow. A tile used to be lifted out of the grid on an
+   * unbounded transform, which is what made the isolation, the escape hatches
+   * and the per-cell overflow overrides necessary. All of it went with it, and
+   * the settle below deliberately does not bring any of it back.
+   */
   .gallery {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--gap-grid);
-    /* Contains the featured tile's z-index bump. */
-    isolation: isolate;
   }
 
   .gallery__item {
     position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-image);
-    background: var(--color-surface);
-    transition:
-      transform var(--dur-hover) var(--ease-hover),
-      box-shadow var(--dur-hover);
   }
 
-  .gallery__link {
-    display: block;
-    height: 100%;
-    width: 100%;
-  }
-
-  .gallery__face {
-    display: block;
-    height: 100%;
-    width: 100%;
-    transition: filter var(--dur-hover);
-  }
-
-  .gallery__item:hover {
-    transform: scale(1.02);
-    box-shadow: var(--shadow-hover);
-  }
-
-  .gallery__item:hover .gallery__face,
-  .gallery__item:focus-within .gallery__face {
-    filter: blur(6px) brightness(0.82);
-  }
-
-  .gallery__cap {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    align-content: center;
-    text-align: center;
-    padding: 16px;
-    color: #fff;
-    background: rgba(17, 17, 17, 0.28);
-    opacity: 0;
-    transition: opacity var(--dur-hover);
-  }
-
-  .gallery__item:hover .gallery__cap,
-  .gallery__item:focus-within .gallery__cap {
-    opacity: 1;
-  }
-
+  /* ---- Settling-weight entrance ---------------------------------------- */
   /*
-   * Touch devices have no hover, so the caption would never appear. Show it
-   * permanently instead of hiding the project name behind an interaction that
-   * does not exist.
-   */
-  @media (hover: none) {
-    .gallery__cap {
-      opacity: 1;
-      background: linear-gradient(to top, rgba(17, 17, 17, 0.62), transparent 62%);
-      align-content: end;
-    }
-
-    .gallery__item:hover .gallery__face {
-      filter: none;
-    }
-  }
-
-  /* ---- Gallery zoom-out reveal ----------------------------------------- */
-  /*
-   * A phone tile is already viewport-wide, so the spec's narrow-viewport scale
-   * of 1.4 can only bleed off both edges — intended, but it grew the document's
-   * scrollable width by 47px at 390 and 430, and the site holds a hard rule that
-   * no page scrolls sideways at any width.
+   * `SettleGrid` writes `--settle-y` and `--settle-s` every frame; these
+   * identity defaults are what the cells render at before hydration, without
+   * JS, once the grid has landed, and under reduced motion. The effect is
+   * therefore additive to a page that is already correct without it.
    *
-   * Clipping one axis satisfies both: the bleed is drawn and then cut at the
-   * viewport edges, and never reaches the document's scroll area. It must be
-   * `clip` and not `hidden` — `hidden` would make this section a scroll
-   * container on the other axis too and swallow the oversized card whole.
+   * The bounds are the design, not a tuning: at most 8px down into a 22px grid
+   * gap and at most 1.5% inward. Nothing can reach outside its own cell, which
+   * is why this section needs no overflow rule, no z-index and no isolation.
    */
-  .gallery-panel {
-    overflow-x: clip;
-    overflow-y: visible;
-  }
-
-  /*
-   * One tile enters oversized and blurred, floating over the grid, and shrinks
-   * into its own cell as you scroll. Scroll-linked: `GalleryZoom` writes
-   * `--zoom-*` every frame, and the identity defaults below keep the tile
-   * ordinary before hydration, without JS, and under reduced motion.
-   *
-   * The wrapper stays put and reserves the slot at its natural size, so nothing
-   * in the grid reflows; the inner element carries the fill, the radius and the
-   * transform. Never move the transform onto the cell itself.
-   */
-  .gallery__item--featured {
-    z-index: 5;
-    /* The oversized card has to escape its cell — and its cell must not show. */
-    overflow: visible;
-    background: none;
-    /*
-     * ...and `overflow: visible` is exactly what un-does the automatic minimum
-     * size, so this has to be restored by hand.
-     *
-     * A grid item that is not a scroll container resolves `min-width: auto` to
-     * its min-content width, and because this tile also carries an
-     * `aspect-ratio`, that minimum is *transferred from its content height* —
-     * which is far wider than a column. At every two-column width the track it
-     * sits in took the whole row: 1080 resolved to `107px 855px`, 1024 to
-     * `101px 805px`, 768 to `74px 595px`. The other column is the narrow one,
-     * which is what this reads as on screen.
-     *
-     * The three-column layout never showed it — the featured cell is in column
-     * one there and 1440/1280 resolve to equal tracks — so this survived every
-     * desktop screenshot. `overflow: hidden` also fixes the tracks and is not an
-     * option: it clips the oversized card, which is the whole effect.
-     *
-     * Both axes, and `min-height` is not the redundant half of the pair. The
-     * transferred minimum runs *from* the content height, so leaving the height
-     * free lets the row grow, `aspect-ratio` derives a width back off it, and
-     * the tile renders wider than the track it was just pinned into — which is
-     * a card hanging out of the viewport rather than a blown-out column, so the
-     * track assertions stay green while the overflow one fails.
-     */
-    min-width: 0;
-    min-height: 0;
-  }
-
-  .zoom__inner {
+  .settle__inner {
     height: 100%;
-    border-radius: var(--radius-image);
-    overflow: hidden;
-    background: var(--color-surface);
     transform-origin: center center;
-    transform: translate3d(var(--zoom-dx, 0px), var(--zoom-dy, 0px), 0) scale(var(--zoom-s, 1));
-    filter: blur(var(--zoom-blur, 0px));
-    will-change: transform, filter;
+    transform: translate3d(0, var(--settle-y, 0px), 0) scale(var(--settle-s, 1));
   }
 
-  /*
-   * Two blurs live in this grid and they must never overlap: this one, and the
-   * pointer's `blur(6px)` + caption. They look alike in a still frame and are
-   * completely different behaviours — a mouse resting over the area would
-   * otherwise caption a half-zoomed card, and the whole move reads as a bug.
-   * Hover belongs to the landed state only.
-   */
-  .gallery__item--featured[data-zoom-active] .zoom__inner {
-    pointer-events: none;
-  }
-
-  .gallery__item--featured[data-zoom-active] .gallery__cap {
-    opacity: 0 !important;
-  }
-
-  .gallery__item--featured[data-zoom-active] .gallery__face {
-    filter: none !important;
+  /* Only while something is actually moving — see the note in `SettleGrid`. */
+  .gallery[data-settling] .settle__inner {
+    will-change: transform;
   }
 
   /* ---- Feature / stat cards -------------------------------------------- */
@@ -999,6 +1045,313 @@
     color: var(--color-ink-2);
   }
 
+  /* ---- Reading measures ------------------------------------------------- */
+  /*
+   * `.sec-intro` is a centred one-paragraph lead. The home page also runs two
+   * multi-paragraph passages — Background and Work With Me — and centred type
+   * stops working at that length: the ragged left edge gives the eye no return
+   * point. These run at a measure instead, aligned to the reading direction.
+   */
+  .prose-block {
+    max-width: 640px;
+    color: var(--color-ink-2);
+    font-size: 17px;
+    line-height: 1.75;
+  }
+
+  .prose-block--centred {
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  [dir='rtl'] .prose-block {
+    line-height: 1.9;
+  }
+
+  .prose-block__lead {
+    margin: 0 0 18px;
+    font-size: clamp(20px, 2vw, 24px);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-ink);
+  }
+
+  .prose-block__p {
+    margin: 0 0 18px;
+  }
+
+  .prose-block__p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* ---- Prose beside a portrait ------------------------------------------ */
+  .split {
+    display: grid;
+    gap: clamp(32px, 5vw, 64px);
+    align-items: start;
+  }
+
+  @media (min-width: 961px) {
+    .split {
+      grid-template-columns: minmax(0, 1fr) clamp(240px, 26vw, 320px);
+    }
+  }
+
+  /*
+   * IMAGE SLOT — empty `--surface` block at 3:4, waiting on a portrait. The
+   * manifest rule is that a missing file gets a surface block at the right
+   * ratio, never a stretched stand-in. Below 961px it would be a large grey
+   * rectangle between two halves of a sentence, so it is dropped rather than
+   * stacked.
+   */
+  .portrait-slot {
+    aspect-ratio: 3 / 4;
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  @media (max-width: 960px) {
+    .split__aside {
+      display: none;
+    }
+
+    /* With the portrait gone the measure has the row to itself — centre it. */
+    .split .prose-block {
+      margin-inline: auto;
+    }
+  }
+
+  /* ---- How I work ------------------------------------------------------- */
+  .steps {
+    display: grid;
+    gap: var(--gap-grid);
+    list-style: none;
+    padding: 0;
+  }
+
+  @media (min-width: 861px) {
+    .steps {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .step {
+    padding: 28px;
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  /*
+   * Normal text flow, not flex. As a flex line the heading's " — Understand…"
+   * was one item, so a narrow card wrapped the whole title under the numeral
+   * and stranded the em dash at the start of line two. Inline, the number is
+   * the first word of the sentence it belongs to and the line wraps like prose.
+   */
+  .step__title {
+    margin: 0 0 12px;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--color-ink);
+  }
+
+  /* The numeral keeps the pixel face in both scripts — see `.pixel-num`. */
+  .step__num {
+    font-family: var(--font-display);
+    font-variation-settings: 'ELGR' 1, 'ELSH' 0;
+    font-size: 24px;
+    letter-spacing: 0.04em;
+    /* Handjet sits low against Poppins at this size; nudge it onto the baseline. */
+    vertical-align: -1px;
+  }
+
+  .step__text {
+    margin: 0 0 12px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--color-ink-2);
+  }
+
+  .step__text:last-child {
+    margin-bottom: 0;
+  }
+
+  /* ---- Results & milestones --------------------------------------------- */
+  /*
+   * Rows rather than cards: the four entries are wildly uneven in length — one
+   * clause against four lines — and equal-height cards would give three of them
+   * a hole to sit in. The pixel value is the anchor; the rest hangs off it.
+   */
+  .results {
+    display: grid;
+    gap: 40px;
+    list-style: none;
+    padding: 0;
+  }
+
+  .result {
+    display: grid;
+    gap: 8px;
+  }
+
+  @media (min-width: 761px) {
+    .result {
+      grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+      gap: 32px;
+      align-items: baseline;
+    }
+  }
+
+  .result__value {
+    /* `.pixel-title` centres by default; in a row it aligns to the reading edge. */
+    text-align: start;
+    font-size: clamp(24px, 2.6vw, 32px);
+  }
+
+  .result__event {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+
+  .result__text {
+    margin: 6px 0 0;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--color-ink-2);
+  }
+
+  /* ---- Technologies ----------------------------------------------------- */
+  /*
+   * One marquee per category, not one continuous track.
+   *
+   * The copy groups the stack into four named categories, and a single track
+   * would either drop those names or interleave four groups into one stream
+   * that says nothing about which tool belongs where. A row each keeps the
+   * grouping and still gives the section the movement it had.
+   *
+   * Each row runs the same 32s, so a short list travels slower than a long one.
+   * That is the wanted behaviour: matching the *speed* instead would make
+   * Infrastructure sprint past while AI & Automation crawls.
+   */
+  .tech-rows {
+    display: grid;
+    gap: 36px;
+    list-style: none;
+    padding: 0;
+  }
+
+  /*
+   * THIS is what made the marquee look like it was cutting its text.
+   *
+   * A grid item resolves `min-width: auto` to its min-content width, and the
+   * track inside is `width: max-content` — so each row grew to the full 4657px
+   * of its own content at every viewport, mask and all. The ramp was then laid
+   * over 4657px instead of over the visible 1240, which put the whole screen
+   * inside the opaque middle of the gradient: nothing faded, and the *viewport*
+   * did the cutting, mid-letter, at both edges. The mask was innocent.
+   *
+   * Both the cell and the clipping box need it, or the blowout just moves down
+   * one level.
+   */
+  .tech-rows > li,
+  .tech-rows .marquee {
+    min-width: 0;
+  }
+
+  .tech-row__label {
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+    /* Reading edge, like every other label on the page — left in en, right in ar. */
+    text-align: start;
+  }
+
+  .tech-row__item {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-ink);
+    white-space: nowrap;
+  }
+
+  /* ---- Case-study rows --------------------------------------------------- */
+  .cases {
+    display: grid;
+    gap: clamp(56px, 7vw, 88px);
+  }
+
+  .case-row {
+    display: grid;
+    gap: clamp(24px, 4vw, 48px);
+    align-items: center;
+  }
+
+  @media (min-width: 901px) {
+    .case-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* Alternate which side the art sits on, in whichever direction we read. */
+    .case-row__media[data-flip='true'] {
+      order: 2;
+    }
+  }
+
+  .case-row__media {
+    display: flex;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--radius-image);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  .case-row__title {
+    margin: 0;
+    font-size: clamp(24px, 2.6vw, 34px);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+  }
+
+  [dir='rtl'] .case-row__title {
+    letter-spacing: 0;
+    line-height: 1.45;
+  }
+
+  .case-row__sub {
+    margin: 10px 0 18px;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-ink);
+  }
+
+  .case-row__text {
+    margin: 0 0 14px;
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--color-ink-2);
+  }
+
+  /* ---- Direct contact lines ---------------------------------------------- */
+  .contact-lines {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 28px;
+    list-style: none;
+    padding: 0;
+    font-size: 17px;
+  }
+
   /* ---- Archive row ------------------------------------------------------ */
   .archive-row {
     display: grid;
@@ -1024,7 +1377,13 @@
     }
   }
 
-  /* ---- Case-study carousel ---------------------------------------------- */
+  /* ---- Carousel --------------------------------------------------------- */
+  /*
+   * Restored from the case-study carousel and now shared: any section can put
+   * its cards in one. Nothing here is per-section, and nothing keys off an id —
+   * two carousels on a page have to be able to sit next to each other without
+   * one driving the other. See `Carousel.tsx`.
+   */
   .carousel {
     position: relative;
     margin-top: 56px;
@@ -1044,27 +1403,70 @@
     display: none;
   }
 
+  /*
+   * The unfocused card recedes by scale, by a faded cover and by losing its
+   * shadow — NOT by its own opacity.
+   *
+   * Opacity on the card was the obvious way to do it and it is the one thing
+   * that cannot work here: it composites the text against the page, so every
+   * contrast guarantee underneath it is computed against a colour that is no
+   * longer what renders. The spec's .85 measured 4.29:1 on body copy; .92 was
+   * the compromise that saved it — until the card gained a 13px subtitle and a
+   * brand tag pill. At .92 the subtitle came out #7a7a7a (4.29:1) and white on
+   * the Invoice app's pink measured 4.14:1, both under AA, and `Tag` cannot
+   * defend itself because it picks its text colour from its own luminance and
+   * knows nothing about an ancestor fading it. axe caught all five nodes.
+   *
+   * Fading the cover art instead puts the whole effect on a graphic, where the
+   * threshold is 3:1 and there is no text to wash out. The card's copy renders
+   * exactly as it does in the work index — which passes — and the recession is
+   * if anything stronger, because the shadow goes with it.
+   */
   .carousel__card {
     flex: none;
     width: min(420px, 78vw);
     scroll-snap-align: center;
     transform: scale(0.94);
-    /*
-      The spec says .85; at that value the blended body text measures 4.29:1 and
-      fails AA. .92 preserves the recession (the .94 scale does most of that work
-      anyway) without making unfocused copy unreadable.
-    */
-    opacity: 0.92;
-    transition:
-      transform var(--dur-slide) var(--ease-soft),
-      opacity var(--dur-slide) var(--ease-soft);
+    transition: transform var(--dur-slide) var(--ease-soft);
   }
 
   .carousel__card[data-focused='true'] {
     transform: scale(1);
-    opacity: 1;
   }
 
+  /*
+   * Desaturated, not faded — and that distinction is load-bearing too.
+   *
+   * Fading the cover moved the contrast problem rather than solving it: the
+   * generic backend face draws a `POST /` label inside the art, and at .55 that
+   * 11px token came out #a9a9a9 on #f8f8f8, 2.21:1. axe flags it whether or not
+   * the art is `aria-hidden`, and rightly — a sighted reader still has to read
+   * it. Any alpha over a light plate does this; the ramp is steep.
+   *
+   * Greyscale drains the brand colour out of the neighbour, which is what
+   * actually signals recession here, and leaves every neutral in the art at the
+   * exact value it had. Nothing composites, so nothing measures differently.
+   */
+  .carousel__card .case-card__cover {
+    transition: filter var(--dur-slide) var(--ease-soft);
+  }
+
+  .carousel__card:not([data-focused='true']) .case-card__cover {
+    filter: grayscale(0.85);
+  }
+
+  /*
+   * The focused card sits on the lifted shadow, its neighbours on the resting
+   * one. Dropping the neighbours' shadow entirely was too far: the card is
+   * white on a white section, so with no shadow the copy read as loose text on
+   * the page rather than as a card waiting its turn.
+   */
+  .carousel__card[data-focused='true'] .case-card {
+    box-shadow: var(--shadow-hover);
+  }
+
+
+  /* ---- Card (carousel, work index, home grids) -------------------------- */
   .case-card {
     display: flex;
     flex-direction: column;
@@ -1090,6 +1492,10 @@
 
   .case-card__body {
     display: flex;
+    /* Grows to the card's height so `margin-top: auto` on the CTA actually
+       reaches the foot — otherwise the links sit at whatever height their own
+       paragraph ended, and a row of cards has a ragged bottom edge. */
+    flex: 1;
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
@@ -1110,11 +1516,43 @@
     line-height: 1.45;
   }
 
+  /*
+   * The home page's cards carry the copy's subtitle line where the work index
+   * carries a classification tag. Same card, one extra slot — a second card
+   * component for "the same card with a subtitle" is how a design system ends
+   * up with three of everything.
+   */
+  .case-card__sub {
+    margin: -4px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-ink-3);
+  }
+
   .case-card__text {
     margin: 0;
     font-size: 15px;
     line-height: 1.6;
     color: var(--color-ink-2);
+  }
+
+  /*
+   * Opt-in clamp, for cards in a carousel.
+   *
+   * A grid tolerates an uneven paragraph; a carousel does not, because the
+   * track equalises every card to the tallest one and that height then belongs
+   * to the whole band. The archive's longest description is three times its
+   * shortest, so without this the section stands as tall as NANO's two
+   * paragraphs and slides four mostly-empty cards past it.
+   *
+   * `-webkit-line-clamp` is the interoperable spelling — every current engine
+   * implements it under that name, including Firefox since 68.
+   */
+  .case-card__text--clamp {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
   }
 
   .case-card__cta {
@@ -1321,10 +1759,6 @@
 
   /* ---- Responsive ------------------------------------------------------- */
   @media (max-width: 1080px) {
-    .gallery {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
     .features {
       grid-template-columns: 1fr;
       gap: 44px;
@@ -1472,14 +1906,12 @@
   }
 
   /*
-   * The featured gallery tile renders at its natural size and position, sharp,
-   * from the first paint. Nothing is lost but the motion. `GalleryZoom` also
-   * clears the properties it had written, so this only has to cover the case
-   * where the preference is set before the script runs.
+   * The selected-work cells sit at their resting position from the first
+   * paint. `SettleGrid` also declines to start its loop, so this only has to
+   * cover the case where the preference is set before the script runs.
    */
-  .zoom__inner {
+  .settle__inner {
     transform: none;
-    filter: none;
   }
 
   /* The fan settles straight into its resting position, with no float. */

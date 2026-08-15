@@ -2,10 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { isLocale, localeHref, locales } from '@/i18n/config';
 import { getDictionary } from '@/i18n';
+import { pageMetadata } from '@/lib/metadata';
 import { site, socialLinks } from '@/lib/site';
 import { Section, SecHead, Sawtooth } from '@/components/ui/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { Button, WavyLink } from '@/components/ui/Button';
+import { BreadcrumbSchema } from '@/components/seo/StructuredData';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -20,14 +22,12 @@ export async function generateMetadata({
   if (!isLocale(locale)) return {};
   const dict = getDictionary(locale);
 
-  return {
+  return pageMetadata({
+    locale,
+    path: 'about',
     title: dict.about.title,
     description: dict.about.lead,
-    alternates: {
-      canonical: localeHref(locale, 'about'),
-      languages: { en: '/en/about', ar: '/ar/about', 'x-default': '/en/about' },
-    },
-  };
+  });
 }
 
 export default async function AboutPage({
@@ -42,10 +42,12 @@ export default async function AboutPage({
 
   return (
     <>
+      <BreadcrumbSchema locale={locale} trail={[{ name: dict.nav.about, path: 'about' }]} />
+
       <div className="pt-[clamp(120px,15vh,168px)]" />
 
       <Section tone="alt" grain>
-        <SecHead title={dict.nav.background} intro={about.lead} />
+        <SecHead as="h1" title={dict.nav.background} intro={about.lead} />
       </Section>
       <Sawtooth tone="bg" />
 

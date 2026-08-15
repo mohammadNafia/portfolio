@@ -19,7 +19,15 @@ const nextConfig: NextConfig = {
     loader: 'custom',
     loaderFile: './src/lib/image-loader.ts',
     imageSizes: [64, 128, 168, 210, 256, 338, 420],
-    deviceSizes: [640, 750, 840],
+    /*
+     * 1080 and above exist for the case-study hero, which fills the whole
+     * `.shell` measure. Without them the widest width Next would ever request
+     * for that slot is 840 — a 1080px box served an 840px file, soft on every
+     * display including 1x. The loader clamps any of these down to the widest
+     * variant a given source actually produced, so listing a width here never
+     * forces an upscale.
+     */
+    deviceSizes: [640, 750, 840, 1080, 1440, 1920],
   },
   // Locale-less URLs are normalised by `src/middleware.ts`, which also honours
   // the stored language preference and Accept-Language.

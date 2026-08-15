@@ -8,7 +8,7 @@ import { getDictionary } from '@/i18n';
 import { site } from '@/lib/site';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { FooterLine } from '@/components/home/sections';
-import { PersonSchema } from '@/components/seo/StructuredData';
+import { SiteSchema } from '@/components/seo/StructuredData';
 
 /**
  * Handjet is the pixel display face. It ships Latin *and* Arabic, which is why
@@ -157,7 +157,7 @@ export default async function LocaleLayout({
         </main>
 
         <FooterLine locale={locale} dict={dict} />
-        <PersonSchema locale={locale} />
+        <SiteSchema locale={locale} />
       </body>
     </html>
   );

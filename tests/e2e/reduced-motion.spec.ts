@@ -71,28 +71,52 @@ test('the hero fan lands settled, with no stagger and no float', async ({ page }
   }
 });
 
-test('the featured gallery tile renders sharp, at its natural size', async ({ page }) => {
+/**
+ * The selected-work grid has no exception in it any more.
+ *
+ * One tile used to carry a scroll-linked zoom, which meant a second reduced-
+ * motion path to hold correct alongside the `.reveal` one. Now every cell is an
+ * ordinary blur-up, so what has to be true is what is true of every other
+ * section: nothing is transformed, nothing is blurred, and every card is
+ * clickable from the first paint.
+ */
+test('every selected-work tile renders sharp, at its natural size', async ({ page }) => {
   await page.goto('/en');
   await page.waitForLoadState('networkidle');
 
-  const slot = page.locator('.gallery__item--featured');
-  await slot.scrollIntoViewIfNeeded();
+  const items = page.locator('.gallery--work .gallery__item');
+  await expect(items).toHaveCount(4);
 
-  const state = await slot.evaluate((node) => {
-    const inner = node.querySelector('.zoom__inner');
-    if (!inner) throw new Error('the featured tile has no inner element');
-    const styles = getComputedStyle(inner);
-    return {
-      transform: styles.transform,
-      filter: styles.filter,
-      active: node.hasAttribute('data-zoom-active'),
-    };
-  });
+  for (let i = 0; i < 4; i += 1) {
+    const item = items.nth(i);
+    await item.scrollIntoViewIfNeeded();
 
-  expect(state.transform, 'the tile is still being scaled').toBe('none');
-  expect(state.filter, 'the tile is still being blurred').toBe('none');
-  // The gate is lifted too, so the tile is clickable and captions on hover.
-  expect(state.active, 'the zoom is still gating hover and clicks').toBe(false);
+    /*
+     * Polled, not read once. Reduced motion collapses the reveal to ~200ms
+     * rather than to nothing, and the observer that starts it fires after the
+     * scroll — so a synchronous read here catches tile 0 at opacity 0 and
+     * reports a working entrance as content that never appeared.
+     */
+    await expect
+      .poll(() => item.evaluate((node) => Number.parseFloat(getComputedStyle(node).opacity)), {
+        message: `tile ${i} never became visible`,
+        timeout: 5000,
+      })
+      .toBeGreaterThan(0.95);
+
+    const state = await item.evaluate((node) => {
+      const styles = getComputedStyle(node);
+      return {
+        transform: styles.transform,
+        filter: styles.filter,
+        events: getComputedStyle(node.querySelector('a')!).pointerEvents,
+      };
+    });
+
+    expect(state.transform, `tile ${i} is still being transformed`).toBe('none');
+    expect(state.filter, `tile ${i} is still being blurred`).toBe('none');
+    expect(state.events, `tile ${i} is not clickable`).not.toBe('none');
+  }
 });
 
 test('case study is fully readable', async ({ page }) => {
@@ -120,9 +144,13 @@ test('navigation and locale switching still work', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 });
 
-test('the marquee is not looping', async ({ page }) => {
+test('the marquees are not looping', async ({ page }) => {
   await page.goto('/en');
-  const track = page.locator('.marquee__track').first();
+  const tracks = page.locator('.marquee__track');
+  // One per stack category.
+  await expect(tracks).toHaveCount(4);
+
+  const track = tracks.first();
   await track.scrollIntoViewIfNeeded();
   const duration = await track.evaluate((node) => getComputedStyle(node).animationDuration);
   // The global reduced-motion rule collapses every animation to ~0ms.
