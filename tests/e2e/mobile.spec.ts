@@ -115,12 +115,13 @@ test('the hero fan shows its three centre cards and they link out', async ({ pag
   expect(await visibleCards.nth(1).getAttribute('href')).toMatch(/\/en\/work\//);
 });
 
-test('gallery captions are visible without hover on touch', async ({ page }) => {
+test('every selected-work card states its name without a hover', async ({ page }) => {
   await page.goto('/en');
-  const caption = page.locator('.gallery__cap').first();
-  await caption.scrollIntoViewIfNeeded();
-  // `@media (hover: none)` pins them open; a hover-only caption would be lost.
-  expect(await caption.evaluate((node) => getComputedStyle(node).opacity)).toBe('1');
+  const card = page.locator('#work .case-card').first();
+  await card.scrollIntoViewIfNeeded();
+  // The tile-and-caption version hid this behind a hover a phone never gets.
+  await expect(card.locator('.case-card__title')).toBeVisible();
+  await expect(card.locator('.case-card__text')).toBeVisible();
 });
 
 test('case study exposes its chapter rail', async ({ page }) => {
@@ -130,12 +131,20 @@ test('case study exposes its chapter rail', async ({ page }) => {
   expect(await rail.getByRole('link').count()).toBeGreaterThanOrEqual(6);
 });
 
-test('the carousel can be driven by its dots', async ({ page }) => {
+test('the archive carousel can be driven by its dots', async ({ page }) => {
   await page.goto('/en');
-  const dots = page.getByRole('tab');
+  const dots = page.locator('#archive [role="tab"]');
   await dots.first().scrollIntoViewIfNeeded();
-  await expect(dots).toHaveCount(3);
+  await expect(dots).toHaveCount(5);
 
   await dots.nth(2).tap();
   await expect(dots.nth(2)).toHaveAttribute('aria-selected', 'true');
+});
+
+test('the case-study rows stack and keep their links', async ({ page }) => {
+  await page.goto('/en');
+  const rows = page.locator('.case-row');
+  await expect(rows).toHaveCount(3);
+  await rows.first().scrollIntoViewIfNeeded();
+  expect(await rows.first().getByRole('link').getAttribute('href')).toMatch(/\/en\/work\//);
 });

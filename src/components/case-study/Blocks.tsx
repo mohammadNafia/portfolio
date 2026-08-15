@@ -1,9 +1,44 @@
+import type { ReactNode } from 'react';
 import type { Locale } from '@/i18n/config';
 import type { Block } from '@/content/schema';
 import type { Dictionary } from '@/i18n/dictionaries/en';
 import { Reveal } from '../ui/Reveal';
+import { WavyLink } from '../ui/Button';
 import { FanCardArt } from '../home/FanCardArt';
 import type { Project } from '@/content/schema';
+
+/**
+ * The only markup case-study copy accepts: `[label](https://…)` inside a lead
+ * or prose block, rendered as the standard wavy inline link. Everything else
+ * stays a plain string, so `summary`, `headline` and the SEO fields — which
+ * feed metadata and JSON-LD — can never pick up markup by accident.
+ *
+ * The label is isolated LTR: a bare domain sitting inside Arabic prose gets
+ * reordered by the bidi algorithm otherwise, and `sendyiq.com` comes out with
+ * the dot in the wrong place.
+ */
+const INLINE_LINK = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+
+function RichText({ value }: { value: string }) {
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+
+  for (const match of value.matchAll(INLINE_LINK)) {
+    const [raw, label, href] = match;
+    const start = match.index ?? 0;
+    if (start > cursor) nodes.push(value.slice(cursor, start));
+    nodes.push(
+      <WavyLink key={start} href={href!} external>
+        <span dir="ltr">{label}</span>
+      </WavyLink>,
+    );
+    cursor = start + raw.length;
+  }
+
+  if (nodes.length === 0) return <>{value}</>;
+  if (cursor < value.length) nodes.push(value.slice(cursor));
+  return <>{nodes}</>;
+}
 
 /**
  * Case-study content blocks.
@@ -30,14 +65,14 @@ export function BlockRenderer({
     case 'lead':
       return (
         <Reveal as="p" className="text-[clamp(19px,2vw,23px)] leading-[1.55] text-ink">
-          {block.text[locale]}
+          <RichText value={block.text[locale]} />
         </Reveal>
       );
 
     case 'prose':
       return (
         <Reveal as="p" className="text-[17px] leading-[1.8] text-ink-2">
-          {block.text[locale]}
+          <RichText value={block.text[locale]} />
         </Reveal>
       );
 

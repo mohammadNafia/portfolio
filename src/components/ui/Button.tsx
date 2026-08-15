@@ -76,6 +76,13 @@ type ButtonProps = {
   variant?: Variant;
   href?: string;
   external?: boolean;
+  /**
+   * Static file straight off the origin — the résumé PDF. A plain `<a download>`
+   * rather than `next/link`, which is for routes: routing a static asset through
+   * the client router would fetch it as an RSC payload and 404. `download` also
+   * keeps it a one-click save instead of a viewer tab the visitor has to leave.
+   */
+  download?: boolean;
   className?: string;
 } & NativeButtonProps;
 
@@ -84,6 +91,7 @@ export function Button({
   variant = 'primary',
   href,
   external,
+  download,
   className = '',
   ...rest
 }: ButtonProps) {
@@ -96,6 +104,15 @@ export function Button({
       ref: ref as never,
       onClick: variant === 'dark' ? pop : undefined,
     };
+
+    if (download) {
+      return (
+        <a href={href} download {...shared}>
+          {children}
+        </a>
+      );
+    }
+
     return external ? (
       <a href={href} target="_blank" rel="noopener noreferrer" {...shared}>
         {children}
