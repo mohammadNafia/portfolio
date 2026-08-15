@@ -19,8 +19,9 @@
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare preview",
     "cf:size": "node scripts/worker-size.mjs",
-    "deploy:staging": "opennextjs-cloudflare deploy -- --env staging",
-    "deploy:production": "opennextjs-cloudflare deploy -- --env production",
+    "deploy:staging": "node scripts/deploy.mjs staging",
+    "deploy:production": "node scripts/deploy.mjs production",
+    "deploy:check": "node scripts/deploy.mjs staging --dry-run",
     "clean": "node -e \"fs.rmSync('.next',{recursive:true,force:true})\""
   },
   "dependencies": {

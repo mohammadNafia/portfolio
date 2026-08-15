@@ -1,0 +1,23 @@
+{
+  "$comment": [
+    "Per-environment build-time configuration, read by scripts/deploy.mjs.",
+    "",
+    "NEXT_PUBLIC_SITE_URL is inlined by Next.js at build time and baked into",
+    "canonical URLs, sitemap.xml, robots.txt and og:image during prerender —",
+    "so it cannot be a Worker secret or var. It has to be correct when the",
+    "build runs, which is what this file guarantees.",
+    "",
+    "These are public URLs, not secrets. Nothing sensitive belongs here.",
+    "",
+    "Replace WORKERS_SUBDOMAIN with the account's workers.dev subdomain; the",
+    "deploy script refuses to run while the placeholder is present."
+  ],
+
+  "staging": {
+    "siteUrl": "https://portfolio-staging.WORKERS_SUBDOMAIN.workers.dev"
+  },
+
+  "production": {
+    "siteUrl": "https://portfolio-production.WORKERS_SUBDOMAIN.workers.dev"
+  }
+}

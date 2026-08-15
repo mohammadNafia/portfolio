@@ -15,19 +15,9 @@
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import path from 'node:path';
+import { resolveBin } from './lib/resolve-bin.mjs';
 
-/*
- * Resolved through the package graph rather than hard-coded, so a hoisted or
- * nested install still finds it. Resolution goes via `package.json` because
- * wrangler's `exports` map does not expose `bin/`, and reads the `bin` field
- * rather than assuming the filename.
- */
-const require = createRequire(import.meta.url);
-const wranglerPkgPath = require.resolve('wrangler/package.json');
-const wranglerPkg = require(wranglerPkgPath);
-const WRANGLER = path.join(path.dirname(wranglerPkgPath), wranglerPkg.bin.wrangler);
+const WRANGLER = resolveBin('wrangler');
 
 const MIB = 1024 * 1024;
 const FREE_LIMIT = 3 * MIB;
@@ -46,14 +36,6 @@ if (!existsSync('.open-next/worker.js')) {
 
 let output;
 try {
-  /*
-   * Run wrangler's entry point on this Node rather than going through `npx`.
-   *
-   * `npx` resolves to `npx.cmd` on Windows, and since the CVE-2024-27980 fix
-   * Node refuses to execFile a `.cmd` without `shell: true` — which in turn
-   * concatenates arguments instead of escaping them (DEP0190). Naming the .js
-   * file sidesteps both.
-   */
   output = execFileSync(
     process.execPath,
     [WRANGLER, 'deploy', '--dry-run', '--env', env],

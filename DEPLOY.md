@@ -19,13 +19,20 @@ the `verify` check in [`.github/workflows/e2e.yml`](.github/workflows/e2e.yml).
 ```bash
 npm run deploy:staging      # develop -> portfolio-staging
 npm run deploy:production   # main    -> portfolio-production
+npm run deploy:check        # build staging + report size, upload nothing
 ```
 
-Both run `opennextjs-cloudflare deploy`, which does a full `next build`, bundles
-the Worker, and uploads. First-time setup on a new machine:
+These go through [`scripts/deploy.mjs`](scripts/deploy.mjs), which sets
+`NEXT_PUBLIC_SITE_URL` for the target environment before running
+`opennextjs-cloudflare deploy`. It refuses to run if the URL is missing,
+malformed, trailing-slashed, or still the placeholder — see
+[Environment variables](#environment-variables) for why that matters.
+
+First-time setup on a new machine:
 
 ```bash
 npx wrangler login
+npx wrangler subdomain get     # then fill deploy.config.json, see below
 ```
 
 ### Before deploying, if images changed
@@ -110,21 +117,33 @@ be present when `opennextjs-cloudflare build` runs.
 Unset, it falls back to `https://mohammednafia.com` (see
 [`src/lib/site.ts`](src/lib/site.ts)) — which means a staging deploy would
 advertise production canonical URLs and an `og:image` on a domain that may not
-resolve yet. Set it per environment:
+resolve yet. Search engines and link scrapers would believe it.
 
-```bash
-# staging
-NEXT_PUBLIC_SITE_URL=https://portfolio-staging.<subdomain>.workers.dev npm run deploy:staging
+Rather than rely on remembering an inline prefix, the value lives in
+[`deploy.config.json`](deploy.config.json) and is applied by
+`scripts/deploy.mjs`:
 
-# production, before DNS is pointed
-NEXT_PUBLIC_SITE_URL=https://portfolio-production.<subdomain>.workers.dev npm run deploy:production
-
-# production, after DNS is pointed
-NEXT_PUBLIC_SITE_URL=https://mohammednafia.com npm run deploy:production
+```json
+{
+  "staging":    { "siteUrl": "https://portfolio-staging.<subdomain>.workers.dev" },
+  "production": { "siteUrl": "https://mohammednafia.com" }
+}
 ```
 
-In the Cloudflare dashboard build settings, set it as a build environment
-variable per environment instead.
+`npm run deploy:staging` and `deploy:production` each build with their own
+value. The script exits non-zero — before building — if the URL is absent,
+unparseable, ends in a slash, or still contains the `WORKERS_SUBDOMAIN`
+placeholder. `NEXT_PUBLIC_SITE_URL` in the environment overrides the file for
+one-off builds.
+
+Update `production.siteUrl` to the custom domain once DNS is pointed; until
+then it should be the `.workers.dev` URL.
+
+> These are public URLs, not secrets — which is why this file is committed
+> while `wrangler.jsonc` still carries no `vars` block.
+
+In the Cloudflare dashboard build settings, set `NEXT_PUBLIC_SITE_URL` as a
+build environment variable per environment to match.
 
 ### Runtime — read by the Worker on each request
 
@@ -136,7 +155,13 @@ All three are read in [`src/app/api/contact/route.ts`](src/app/api/contact/route
 | `CONTACT_TO_EMAIL` | both | no, but set as a secret | Inbox for inquiries. Defaults to the address in `src/lib/site.ts`. |
 | `CONTACT_FROM_EMAIL` | both | no, but set as a secret | Must be a domain verified with Resend. |
 
-Set them as secrets — **never** in `wrangler.jsonc`, which is committed and public:
+Set them as secrets — **never** in `wrangler.jsonc`, which is committed and public.
+
+`wrangler secret put` prompts for the value on stdin and sends it straight to
+Cloudflare. **That prompt is the only place the key should ever be typed** — not
+into a file, not into a commit, not into a chat window, and not as a shell
+argument (which would land in shell history). The terminal does not echo it, and
+`wrangler secret list` shows names only, never values.
 
 ```bash
 npx wrangler secret put RESEND_API_KEY     --env production
@@ -190,6 +215,36 @@ Workers & Pages → Create → Connect to Git → `mohammadNafia/portfolio`:
 - **Build command:** `npx opennextjs-cloudflare build`
 - **Deploy command:** `npx wrangler deploy --env production` (or `--env staging`)
 - **Build env vars:** `NEXT_PUBLIC_SITE_URL` per environment (see above)
+
+---
+
+## Known: this directory is tracked by a second git repo
+
+`C:\Users\Administrator\.git` is a repository rooted at the **home directory**.
+It tracks 525 files — these 118, plus nine unrelated projects (Baghdad AI
+Summit, FLOW-FRONT, BreastCancer, coursework, and others). Its remotes are
+`nawa-ai-iq/nawa-frontend` and `sendy-its/sendy-frontend`.
+
+This project's own repo was initialised later, so **every file here is tracked
+twice**: once by `PORTFULIE/.git` (correct, pushed to `mohammadNafia/portfolio`)
+and once by the home repo (incidental).
+
+Nothing here depends on that, and it is deliberately left alone. But it is
+worth knowing before it surprises someone:
+
+- `git status` run from a parent directory reports on the *home* repo, and will
+  list thousands of unrelated files.
+- Committing from a parent directory commits to the home repo, not this one.
+  Always confirm with `git rev-parse --show-toplevel` — it must print the
+  PORTFULIE path.
+- A `git push` from the home repo would publish nine other projects to whichever
+  of its remotes is targeted.
+
+Resolving it — untracking `Desktop/PORTFULIE` from the home repo, or retiring
+that repo entirely — is a separate piece of work, to be done deliberately
+rather than discovered mid-incident.
+
+---
 
 ## Branch protection on `main` (one-time)
 

@@ -57,3 +57,12 @@ docs/screenshots/
 
 # Captures of third-party reference sites, kept locally for analysis only
 docs/reference/
+
+# Build scaffolding — kept on disk, not published. 66 KB of prompt material
+# that has no place in a public portfolio repo.
+CLAUDE_PORTFOLIO_REDFOLIO_PROMPT.md
+
+# Runtime secrets for `wrangler dev`. Worker secrets are NOT readable locally,
+# so these live here — never committed. See DEPLOY.md.
+.dev.vars
+.dev.vars.*
