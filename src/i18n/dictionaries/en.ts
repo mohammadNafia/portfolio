@@ -660,6 +660,13 @@ export const en = {
       namePlaceholder: 'Mohammed Nafia',
       email: 'Email',
       emailPlaceholder: 'you@company.com',
+      /*
+       * The placeholder shows the Iraqi international form because that is the
+       * primary case, but the field accepts any number — see the digit-count
+       * rule in `contact-schema.ts` rather than a country pattern.
+       */
+      phone: 'Phone number',
+      phonePlaceholder: '+964 770 123 4567',
       company: 'Company or project name',
       companyOptional: 'Optional',
       companyPlaceholder: 'Acme Trading',
@@ -697,6 +704,8 @@ export const en = {
       nameRequired: 'Please enter your name.',
       emailRequired: 'Please enter an email address.',
       emailInvalid: 'That does not look like a valid email address.',
+      phoneRequired: 'Please enter a phone number.',
+      phoneInvalid: 'That does not look like a valid phone number. Include the country code if you are outside Iraq.',
       serviceRequired: 'Please choose a service.',
       summaryRequired: 'Please describe your project.',
       summaryShort: 'Please add a little more detail — at least 20 characters.',
