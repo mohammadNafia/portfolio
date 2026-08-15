@@ -81,6 +81,13 @@ test.describe('phone number field', () => {
     for (const number of ['07701234567', '+44 7911 123456']) {
       await page.goto('/en/contact');
 
+      /*
+       * Routes persist across navigations, so without this the handler
+       * registered on the first pass is still installed on the second and the
+       * later iterations assert against a request the first closure captured.
+       */
+      await page.unrouteAll({ behavior: 'ignoreErrors' });
+
       let sent: Record<string, unknown> | null = null;
       await page.route('**/api/contact', async (route) => {
         sent = route.request().postDataJSON();

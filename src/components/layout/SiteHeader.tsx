@@ -85,9 +85,10 @@ export function SiteHeader({ locale, dict }: { locale: Locale; dict: Dictionary 
      * line is INSIDE. Nothing to accumulate, nothing to go stale, and the
      * answer at any scroll position depends only on that scroll position.
      *
-     * The `null` case is deliberate and load-bearing: the archive and contact
-     * sections have no nav link, so when the line is in one of them no link is
-     * highlighted. An honest blank beats pointing at the wrong section.
+     * The empty-string case is deliberate and load-bearing: the archive and
+     * contact sections have no nav link, so when the line is inside one of them
+     * `current` stays `''` and no link is highlighted. An honest blank beats
+     * pointing at the wrong section.
      */
     const NAV_CLEARANCE = 120;
 

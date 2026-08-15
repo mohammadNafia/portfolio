@@ -70,6 +70,34 @@ describe('contact schema — phone', () => {
     expect(contactSchema.safeParse({ ...valid, phone }).success).toBe(true);
   });
 
+  /**
+   * The failure this guards would have been invisible to every test above,
+   * because every one of them is written in ASCII.
+   *
+   * `\d` and `\D` match ASCII digits only, so an Arabic speaker entering their
+   * own number in their own numerals — on the Arabic half of a bilingual site
+   * built primarily for Iraq — had it rejected as not a valid phone number.
+   */
+  it.each([
+    '٠٧٧٠١٢٣٤٥٦٧',
+    '+٩٦٤ ٧٧٠ ١٢٣ ٤٥٦٧',
+    '۰۷۷۰۱۲۳۴۵۶۷',
+  ])('accepts the Arabic-Indic number %s', (phone) => {
+    expect(contactSchema.safeParse({ ...valid, phone }).success).toBe(true);
+  });
+
+  it('does not rewrite what the visitor typed', () => {
+    const phone = '+٩٦٤ ٧٧٠ ١٢٣ ٤٥٦٧';
+    const result = contactSchema.safeParse({ ...valid, phone });
+    expect(result.success).toBe(true);
+    // Folded for counting only — the delivered value is theirs, in their script.
+    if (result.success) expect(result.data.phone).toBe(phone);
+  });
+
+  it('still counts Arabic-Indic digits against the same bounds', () => {
+    expect(errorFor({ ...valid, phone: '١٢٣٤٥' }, 'phone')).toBe('phoneInvalid');
+  });
+
   it.each([
     ['call me maybe', 'letters are not a phone number'],
     ['12345', 'too few digits to be a phone number anywhere'],

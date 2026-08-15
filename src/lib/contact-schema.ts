@@ -15,10 +15,31 @@ import { z } from 'zod';
  * prose into the wrong field gets told the field is wrong rather than that
  * their number is too short.
  */
-const PHONE_SHAPE = /^[+()\-.\s\d]+$/;
+const PHONE_SHAPE = /^[+()\-.\s\d٠-٩۰-۹]+$/;
+
+/**
+ * Arabic-Indic (٠١٢٣٤٥٦٧٨٩, U+0660–0669) and the Persian/Urdu variant
+ * (۰۱۲۳۴۵۶۷۸۹, U+06F0–06F9) folded to ASCII before anything counts them.
+ *
+ * `\d` and `\D` match ASCII only, so without this an Arabic speaker typing
+ * their own number in their own numerals — on the Arabic half of a bilingual
+ * site aimed primarily at Iraq — has it rejected as "not a valid phone
+ * number". That is the single worst failure this form could have, and it would
+ * have been invisible to every test written in English.
+ *
+ * Folding is for VALIDATION only. The value posted and delivered is whatever
+ * the visitor typed, because a number is easier to read back in the script it
+ * was written in, and rewriting someone's input is not this field's job.
+ */
+const foldDigits = (value: string) =>
+  value.replace(/[٠-٩۰-۹]/g, (digit) => {
+    const code = digit.codePointAt(0)!;
+    const base = code >= 0x06f0 ? 0x06f0 : 0x0660;
+    return String(code - base);
+  });
 
 /** Digits only, for counting. Formatting is the visitor's business, not ours. */
-const digitsIn = (value: string) => value.replace(/\D/g, '');
+const digitsIn = (value: string) => foldDigits(value).replace(/\D/g, '');
 
 /**
  * 7 to 15 digits.
