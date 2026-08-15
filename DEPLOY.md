@@ -6,8 +6,15 @@ full `.next` build and export mode breaks it.
 
 | | branch | Worker | URL |
 |---|---|---|---|
-| **production** | `main` | `portfolio-production` | `portfolio-production.<subdomain>.workers.dev` |
-| **staging** | `develop` | `portfolio-staging` | `portfolio-staging.<subdomain>.workers.dev` |
+| **production** | `main` | `portfolio-production` | <https://mohammednafia.com> |
+| **staging** | `develop` | `portfolio-staging` | <https://portfolio-staging.mohammadnafia1.workers.dev> |
+
+Production also stays reachable at `portfolio-production.mohammadnafia1.workers.dev`.
+That is deliberate — it is the fallback used to verify a deploy before trusting
+DNS. Adding `routes` to a Wrangler environment silently flips `workers_dev` to
+`false`, which retires that URL; `"workers_dev": true` is set explicitly to stop
+that. It costs nothing in SEO, because every page carries a canonical pointing at
+the apex, so the workers.dev copy de-duplicates itself.
 
 Everything lands on `develop` first. `main` takes pull requests only, gated on
 the `verify` check in [`.github/workflows/e2e.yml`](.github/workflows/e2e.yml).
@@ -215,6 +222,59 @@ Workers & Pages → Create → Connect to Git → `mohammadNafia/portfolio`:
 - **Build command:** `npx opennextjs-cloudflare build`
 - **Deploy command:** `npx wrangler deploy --env production` (or `--env staging`)
 - **Build env vars:** `NEXT_PUBLIC_SITE_URL` per environment (see above)
+
+---
+
+## DNS — remaining manual steps
+
+The apex is live and was created by `wrangler deploy` from the `routes` entry in
+`wrangler.jsonc`. Two things still need doing by hand, because they need zone
+write access that the Wrangler OAuth token does not carry (it has `zone: read`).
+
+Do both in one sitting — there is no reason to touch DNS twice.
+
+### 1. `www` → apex redirect
+
+`www.mohammednafia.com` is currently **NXDOMAIN**. Deliberately not a second
+Custom Domain: two Custom Domains means two live hosts serving identical content.
+A redirect keeps exactly one indexable surface.
+
+1. **DNS → Records → Add**: `AAAA`, name `www`, value `100::`, **Proxied
+   (orange)**. A discard-prefix placeholder; the proxy intercepts it, so nothing
+   is ever routed there.
+2. **Rules → Redirect Rules → Create**:
+   - If: `Hostname equals www.mohammednafia.com`
+   - Then: Dynamic redirect to `concat("https://mohammednafia.com", http.request.uri.path)`
+   - Status **301**, preserve query string.
+
+Redirect Rules run at the edge before the Worker, so this costs nothing and does
+not count against Worker requests.
+
+### 2. Resend sending domain
+
+Verify **`send.mohammednafia.com`**, not the apex. Resend recommends a subdomain,
+and apex verification would put MX on the root and break any existing mail on
+`mohammednafia.com`.
+
+All three are **DNS only (grey cloud)** — they cannot collide with the proxied
+apex. Copy the values Resend shows *without* the domain suffix (`send`, not
+`send.mohammednafia.com`):
+
+| Type | Name | Proxy | Value |
+|---|---|---|---|
+| MX | `send` | DNS only | `feedback-smtp.<region>.amazonses.com`, priority 10 |
+| TXT | `send` | DNS only | `v=spf1 include:amazonses.com ~all` |
+| TXT | `resend._domainkey` | DNS only | the DKIM key Resend shows, starts `p=` |
+
+Then set the secrets (see [Environment variables](#environment-variables)):
+
+```bash
+npx wrangler secret put RESEND_API_KEY     --env production
+npx wrangler secret put CONTACT_FROM_EMAIL --env production   # Portfolio <hello@send.mohammednafia.com>
+```
+
+`CONTACT_FROM_EMAIL` must be on the verified domain or Resend rejects the send.
+The visitor still gets replies at their own address — the route sets `reply_to`.
 
 ---
 
