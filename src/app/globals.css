@@ -1275,7 +1275,9 @@
     }
   }
 
+  /* `position: relative` for the same reason as `.case-card__cover`. */
   .case-row__media {
+    position: relative;
     display: flex;
     aspect-ratio: 4 / 3;
     overflow: hidden;
@@ -1457,9 +1459,18 @@
     box-shadow: var(--shadow-hover);
   }
 
+  /*
+   * `position: relative` because the cover now holds a `next/image` with
+   * `fill`, which positions against the nearest positioned ancestor — without
+   * it the image escapes to the page and covers the viewport. `display: flex`
+   * stays for the coded `FanCardArt` fallback, which is a flow child rather
+   * than an absolutely positioned one.
+   */
   .case-card__cover {
+    position: relative;
     aspect-ratio: 4 / 3;
     display: flex;
+    overflow: hidden;
   }
 
   .case-card__body {

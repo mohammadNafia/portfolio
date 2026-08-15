@@ -6,7 +6,7 @@ import { site } from '@/lib/site';
 import { Section, SecHead, Tag } from '../ui/Section';
 import { Reveal } from '../ui/Reveal';
 import { Button } from '../ui/Button';
-import { FanCardArt } from './FanCardArt';
+import { CardCover } from './CardCover';
 import { SettleGrid } from './SettleGrid';
 import { Carousel, type CarouselItem } from './Carousel';
 import { ContactForm } from '../contact/ContactForm';
@@ -96,8 +96,8 @@ export function SelectedWork({
                   className="case-card block h-full"
                   aria-label={`${item.title} — ${item.cta}`}
                 >
-                  <span className="case-card__cover" aria-hidden="true">
-                    <FanCardArt project={project} />
+                  <span className="case-card__cover">
+                    <CardCover project={project} locale={locale} priority={index < 2} />
                   </span>
                   <span className="case-card__body">
                     <span className="case-card__title">{item.title}</span>
@@ -335,7 +335,18 @@ export function CaseStudies({
           return (
             <Reveal key={slug} as="article" className="case-row" delay={80}>
               <div className="case-row__media" data-flip={index % 2 === 1 ? 'true' : undefined}>
-                <FanCardArt project={project} />
+                {/*
+                  The fan composition here, the case-study hero up in Selected
+                  Work. All three of these projects appear in both sections, and
+                  showing the same photograph twice on one page is what makes
+                  the repetition read as padding rather than as depth.
+                */}
+                <CardCover
+                  project={project}
+                  locale={locale}
+                  prefer="fan"
+                  sizes="(max-width: 900px) 92vw, 560px"
+                />
               </div>
 
               <div className="case-row__body">
@@ -409,8 +420,25 @@ export function ArchiveStrip({
           className="case-card block h-full"
           aria-label={`${item.title} — ${item.cta}`}
         >
-          <span className="case-card__cover" aria-hidden="true">
-            <FanCardArt project={project} />
+          {/*
+            Fan art first here too. Al-Tafawuq is the one project that appears
+            in both Selected Work and the archive, and it has both images — so
+            the grid shows its dashboard export and the carousel shows its fan
+            composition rather than the same picture twice on one page.
+
+            The three projects with neither image (NANO, Form Builder,
+            MedicHub) fall through to the coded face, which is the right answer
+            rather than a gap: it is built from each project's own module names,
+            and borrowing a photograph of a different product to fill the slot
+            would be the one thing worse than an abstract one.
+          */}
+          <span className="case-card__cover">
+            <CardCover
+              project={project}
+              locale={locale}
+              prefer="fan"
+              sizes="(max-width: 760px) 82vw, 360px"
+            />
           </span>
 
           <span className="case-card__body">
