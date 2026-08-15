@@ -160,7 +160,7 @@ All three are read in [`src/app/api/contact/route.ts`](src/app/api/contact/route
 |---|---|---|---|
 | `RESEND_API_KEY` | production (staging to test) | **yes** | Without it, `POST /api/contact` returns `503 unavailable`. |
 | `CONTACT_TO_EMAIL` | both | no, but set as a secret | Inbox for inquiries. Defaults to the address in `src/lib/site.ts`. |
-| `CONTACT_FROM_EMAIL` | both | no, but set as a secret | Must be a domain verified with Resend. |
+| `CONTACT_FROM_EMAIL` | both | no, but set as a secret | A domain verified with Resend — **or** the interim `onboarding@resend.dev`, which carries the constraint below. |
 
 Set them as secrets — **never** in `wrangler.jsonc`, which is committed and public.
 
@@ -180,6 +180,40 @@ npx wrangler secret list --env production   # verify, without revealing values
 
 Repeat with `--env staging`. Secrets are per-Worker, so the two environments do
 not share them.
+
+#### The `onboarding@resend.dev` constraint — read this before changing an address
+
+No domain is verified with Resend yet, so the sender is Resend's shared testing
+address, `Portfolio <onboarding@resend.dev>`. It works, but it buys that by
+accepting a restriction that is easy to trip over months later:
+
+> **With the `resend.dev` sender, Resend delivers only to the email address that
+> owns the Resend account.** Anything else comes back `403 validation_error`.
+
+Which means the two settings below are **coupled**, and neither is free to move
+on its own:
+
+- the address that owns the Resend account, and
+- `CONTACT_TO_EMAIL` (defaulting to `site.email` in [`src/lib/site.ts`](src/lib/site.ts))
+
+Today both are `mohammadnafia1@gmail.com`, which is the only reason sending
+works. Point `CONTACT_TO_EMAIL` at a different inbox — a client address, a team
+alias, a forwarder — and every inquiry starts failing, while the form keeps
+looking fine to the visitor. The same applies in reverse if the Resend account
+is ever moved to another address.
+
+**Verifying a domain is what lifts this.** Once `mohammadnafia.com` (or a `send.`
+subdomain) is verified and `CONTACT_FROM_EMAIL` moves onto it, the recipient
+restriction disappears and `CONTACT_TO_EMAIL` becomes free to be any inbox. See
+[2. Resend sending domain](#2-resend-sending-domain). Until
+then, treat "the Resend account address" and "the inquiry inbox" as one value
+that happens to be written down in two places.
+
+Note that a failure here is **not** visible from the endpoint's response: a bad
+key and a refused recipient both surface as `502 {"status":"error"}`, and Resend
+returns `403` for both — only the `name` in its response body separates
+`invalid_api_key` from `validation_error`. The route logs that body verbatim, so
+`npx wrangler tail --env production` is the place to look.
 
 For local runtime testing, put them in `.dev.vars` (git-ignored, same
 `KEY=value` format as `.env`). `wrangler dev` does not read Worker secrets.
