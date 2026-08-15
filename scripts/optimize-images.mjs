@@ -56,9 +56,18 @@ const QUALITY = 90;
  * lists must stay in sync with this one — the loader can only return a file
  * that exists, so a width Next requests but this never wrote would 404.
  *
- * Variants wider than the source are skipped rather than upscaled.
+ * The top three rungs are the case-study hero, which is a different order of
+ * slot from everything above it: it runs the full 1080px `.shell` measure
+ * rather than a 210px card, so 1080 is its 1x, 1920 is as close to 2x as any
+ * supplied export reaches, and 1440 is the rung in between that keeps a
+ * mid-DPR screen from jumping straight to the largest file.
+ *
+ * Variants wider than the source are skipped rather than upscaled. That is the
+ * mechanism the no-upscale rule rests on: a 1125px export simply has no 1440
+ * or 1920 rung, and the loader clamps a request for one down to the widest
+ * file that genuinely exists.
  */
-const LADDER = [64, 128, 168, 210, 256, 338, 420, 640, 750, 840];
+const LADDER = [64, 128, 168, 210, 256, 338, 420, 640, 750, 840, 1080, 1440, 1920];
 
 /**
  * Everything the site actually references. A file in `SRC` that is not listed
@@ -93,6 +102,46 @@ const MANIFEST = [
     width: 800,
     // 338px display width -> 750px variant at 2x.
     why: '338px display, 750px widest variant',
+  },
+  /*
+   * Case-study heroes.
+   *
+   * These break the arithmetic every entry above them follows, and the break is
+   * deliberate rather than an oversight. Rule 1 asks for twice the widest
+   * requested variant — 2160px for a 1080px slot — and not one of the four
+   * supplied exports reaches it. So each `width` is the SOURCE width instead:
+   * `withoutEnlargement` means a larger number would be a no-op that merely
+   * misreports the intent, and a smaller one would throw away pixels that were
+   * supplied. Each entry records how far short of 2x it actually lands.
+   *
+   * They are also the only entries here that are not full-bleed art: all four
+   * are presentation renders that carry their own background and their own
+   * drop shadow, baked in. That is why the hero drops the card chrome when one
+   * is present — see the `heroImage` branch in `work/[slug]/page.tsx`.
+   */
+  {
+    file: 'sendy-dashboard.png',
+    out: 'hero-sendy.webp',
+    width: 1125,
+    why: '1080px hero slot — 1125px source is 1.04x, short of 2x',
+  },
+  {
+    file: 'Immar-dashboard.png',
+    out: 'hero-immar.webp',
+    width: 1920,
+    why: '1080px hero slot — 1920px source is 1.78x, short of 2x',
+  },
+  {
+    file: 'al-tafawuq-dashboard.png',
+    out: 'hero-al-tafawuq.webp',
+    width: 1254,
+    why: '1080px hero slot — 1254px source is 1.16x, short of 2x',
+  },
+  {
+    file: 'bank.png',
+    out: 'hero-virtual-banking.webp',
+    width: 1920,
+    why: '1080px hero slot — 1920px source is 1.78x, short of 2x',
   },
   {
     file: 'og.png',
