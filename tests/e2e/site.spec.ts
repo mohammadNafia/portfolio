@@ -303,6 +303,52 @@ test.describe('generated metadata routes', () => {
       }
     });
   }
+
+  /*
+   * Case studies are the pages that actually get shared, and they nearly
+   * shipped without a card.
+   *
+   * Next.js REPLACES a parent `openGraph` object rather than merging into it,
+   * so a page that sets title/description/url without `images` silently drops
+   * og:image — which is the tag Facebook, LinkedIn, WhatsApp and Slack read.
+   * The homepage assertions above all passed while every case study had no
+   * og:image at all, so this is asserted where the omission actually occurs.
+   *
+   * The twitter:title check is the same bug seen from the other side: with no
+   * `twitter` block the page inherits the site-wide default, and a shared case
+   * study announces the generic portfolio title instead of its own.
+   */
+  for (const locale of ['en', 'ar'] as const) {
+    test(`${locale} case studies carry their own card`, async ({ page }) => {
+      const slugs = ['sendy', 'immar', 'nano-ocr'];
+
+      for (const slug of slugs) {
+        await page.goto(`/${locale}/work/${slug}`);
+
+        const ogImage = await page
+          .locator('meta[property="og:image"]')
+          .first()
+          .getAttribute('content');
+        expect(ogImage, `/${locale}/work/${slug} has no og:image`).toBeTruthy();
+        expect(ogImage, `og:image on ${slug} is not absolute`).toMatch(/^https?:\/\//);
+
+        const ogTitle = await page
+          .locator('meta[property="og:title"]')
+          .first()
+          .getAttribute('content');
+        const twitterTitle = await page
+          .locator('meta[name="twitter:title"]')
+          .first()
+          .getAttribute('content');
+
+        expect(twitterTitle, `${slug} has no twitter:title`).toBeTruthy();
+        expect(
+          twitterTitle,
+          `twitter:title on ${slug} fell back to the site default instead of the case study title`,
+        ).toBe(ogTitle);
+      }
+    });
+  }
 });
 
 test.describe('keyboard and accessibility', () => {

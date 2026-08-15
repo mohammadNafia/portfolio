@@ -38,12 +38,35 @@ export async function generateMetadata({
         'x-default': `/en/work/${slug}`,
       },
     },
+    /*
+     * `images` is repeated here rather than inherited: Next.js replaces the
+     * parent's `openGraph` object wholesale instead of merging into it, so
+     * omitting it drops og:image from every case study. Facebook, LinkedIn,
+     * WhatsApp and Slack all read og:image — those shares rendered with no
+     * card image at all until this was set.
+     */
     openGraph: {
       type: 'article',
       title: project.seo.title[locale],
       description: project.seo.description[locale],
       url: `${site.url}${localeHref(locale, `work/${slug}`)}`,
       locale: locale === 'ar' ? 'ar_IQ' : 'en_US',
+      images: [
+        { url: '/img/og.png', width: 1200, height: 630, alt: project.seo.title[locale] },
+      ],
+    },
+    /*
+     * Same reason, and the same trap in the other direction: with no `twitter`
+     * block the page inherited the site-wide default, so a shared case study
+     * announced the generic portfolio title instead of its own.
+     */
+    twitter: {
+      card: 'summary_large_image',
+      title: project.seo.title[locale],
+      description: project.seo.description[locale],
+      images: [
+        { url: '/img/og.png', width: 1200, height: 630, alt: project.seo.title[locale] },
+      ],
     },
   };
 }
