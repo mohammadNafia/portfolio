@@ -22,6 +22,12 @@
     "binding": "ASSETS"
   },
 
+  // Workers Logs, verified against Cloudflare's docs as included on BOTH the
+  // Free and Paid plans — not a paid-only feature and not a billing risk.
+  //   Free: 200,000 log events/day, 3-day retention
+  //   Paid: 20M/month included, then $0.60/million, 7-day retention
+  // A portfolio site will not approach 200k events/day. Logpush is the part
+  // that needs Business/Enterprise; this is not that.
   "observability": {
     "enabled": true
   },

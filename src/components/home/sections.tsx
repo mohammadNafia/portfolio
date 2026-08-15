@@ -118,7 +118,15 @@ export function Background({ locale, dict }: { locale: Locale; dict: Dictionary 
         {background.features.map((feature, index) => (
           <Reveal key={feature.title} as="li" delay={index * 80} className="feature">
             <span className="feature__icon" aria-hidden="true">
-              <span className="pixel-title !text-[26px] leading-none">
+              {/*
+                `pixel-num` keeps Handjet on Arabic pages. Arabic display type
+                falls back to IBM Plex Sans Arabic (see globals.css), but that
+                swap exists for joined script — these are Latin digits, which
+                Handjet renders correctly, so the pixel identity survives here.
+                Deliberately NOT applied to the credibility values below: those
+                are Arabic words in `ar`, not numerals.
+              */}
+              <span className="pixel-title pixel-num !text-[26px] leading-none">
                 {String(index + 1).padStart(2, '0')}
               </span>
             </span>

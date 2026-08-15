@@ -63,6 +63,52 @@ test('Arabic display type uses its own leading, not the Latin metric', async ({ 
   expect(ratio).toBeGreaterThan(1.25);
 });
 
+/*
+ * Handjet ships an Arabic and the pixel identity was meant to carry across both
+ * scripts, but it failed QA on device: disconnected letterforms, overlapping
+ * glyphs and a detached hamza, reproducing identically at 46px and 57.6px —
+ * far above Handjet's documented 26px floor, so raising the size fixes nothing.
+ * design-tokens.md records the failure; this keeps it from being undone
+ * silently, since the breakage is only visible to someone who reads Arabic.
+ *
+ * Latin must keep Handjet: the swap is per-script, not a retreat from the
+ * pixel identity.
+ */
+test('Arabic display headings do not use Handjet', async ({ page }) => {
+  await page.goto('/ar');
+
+  const families = await page
+    .locator('.pixel-title')
+    .evaluateAll((nodes) =>
+      nodes.map((node) => ({
+        family: getComputedStyle(node).fontFamily,
+        text: (node.textContent ?? '').trim(),
+      })),
+    );
+
+  expect(families.length).toBeGreaterThan(0);
+
+  for (const { family, text } of families) {
+    /* Latin digits keep the pixel face — Handjet renders numerals correctly,
+     * and the swap is about joined script. See `.pixel-num`. */
+    if (/^\d+$/.test(text)) continue;
+
+    expect(family, `"${text}" fell back to Handjet, which cannot shape Arabic`).not.toMatch(
+      /Handjet/i,
+    );
+    expect(family, `"${text}" is not using the approved Arabic display face`).toMatch(/Plex/i);
+  }
+});
+
+test('Latin display headings still use Handjet', async ({ page }) => {
+  await page.goto('/en');
+  const family = await page
+    .locator('.pixel-title')
+    .first()
+    .evaluate((node) => getComputedStyle(node).fontFamily);
+  expect(family, 'the Arabic fallback leaked into Latin').toMatch(/Handjet/i);
+});
+
 test('navigation and locale switching work', async ({ page }) => {
   await page.goto('/en');
   await page.locator('footer').getByRole('link', { name: 'Work', exact: true }).click();

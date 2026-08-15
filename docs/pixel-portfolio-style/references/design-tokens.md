@@ -61,6 +61,44 @@ Two known caveats, both worth a visual QA pass before committing:
 handoff: `IBM Plex Sans Arabic 700` for Arabic headings, keeping the centred layout, the size
 ramp, the squiggle, and the reveal identical. Same identity, different face per script.
 
+### Handjet's Arabic failed QA — the fallback is in force, do not revert it
+
+Confirmed on device, not in a desktop viewport: at 390px the Arabic hero line
+`ومؤسس منتجات` rendered with disconnected letterforms, overlapping glyphs and a detached
+hamza on the `ؤ`. Illegible to a reader of Arabic.
+
+**It is not a size problem, and raising the clamp does not fix it.** The obvious reading is
+that the responsive clamp had dropped below the `≥26px` floor above. It had not:
+
+| viewport | computed size | multiple of the 26px floor | result |
+|---|---|---|---|
+| 390px | 46px | 1.8× | broken |
+| 430px | 46px | 1.8× | broken |
+| 768px | 57.6px | 2.2× | broken, identically |
+
+The variation settings were correct too — `ELGR 1, ELSH 0` at weight 700, exactly as specified
+above — so all three plausible misconfigurations were ruled out before changing the face. The
+defects are the same shape at 2.2× the floor as at 1.8×; size is not the variable.
+
+Measured on WebKit (Playwright), which is the engine Safari ships. A Chromium "mobile viewport"
+is not a valid test here: Handjet's Arabic is grid-fitted, the failure is joining and mark
+placement, and that is decided by the platform shaper — CoreText on iOS, not Skia/HarfBuzz.
+
+**In force now** (`src/app/globals.css`):
+
+- `[dir='rtl'] .pixel-title` and `[dir='rtl'] .hero__line2` → `var(--font-arabic)`,
+  with `font-variation-settings: normal` (`ELGR`/`ELSH` are Handjet axes; Plex inherits garbage).
+- Size ramp, centring, squiggle and reveal are untouched — only the face swaps.
+- Latin keeps Handjet. The pixel identity is intact on `/en`.
+- `.pixel-num` keeps Handjet even under RTL: `01`/`02`/`03` are Latin digits, which Handjet
+  renders correctly, so the pixel identity survives on `/ar` too. Deliberately not applied to
+  the credibility values — those are Arabic words in `ar`, not numerals.
+
+Guarded by `tests/e2e/cross-browser.spec.ts` → *"Arabic display headings do not use Handjet"*
+and *"Latin display headings still use Handjet"*, because this breakage is only visible to
+someone who reads Arabic and would otherwise be reverted by anyone who found the pixel Arabic
+prettier in a screenshot.
+
 The display font is **only** used for: the hero's second line, section titles, and pixel numerals
 in stats/process sections. Nothing else, ever.
 
