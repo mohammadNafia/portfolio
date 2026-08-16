@@ -38,7 +38,7 @@ originates anywhere other than this list.**
 |---|---|
 | `Desktop/SENDY-BRAND GUIDLINE/` (Sendy logo, icon, mascot, profile art) | Sendy's brand marks belong to Sendy, not to this portfolio. The case study uses Sendy's accent colour only. Embedding the mascot would make the portfolio look like Sendy's own site — the prompt explicitly warns against letting one project's identity take over. |
 | `Desktop/sendy video/sendy-launch-video-images/` (13 scene renders) | These are marketing renders produced for a launch video, not product screenshots. Presenting them as product UI would misrepresent them. They are listed in `launch-assets.md` as candidates for the launch reel, where they are honest. |
-| `Desktop/cv/*.pdf` (7 CV variants) | No single current CV is identifiable as the canonical one, and several are targeted at different roles. A CV download link is therefore **not** shown anywhere on the site. See `content-gaps.md`. |
+| `Desktop/cv/*.pdf` (the role-targeted variants) | Superseded. `Mohammed-Nafia-cv.pdf` was confirmed current and is published at `public/Mohammed-Nafia-CV.pdf`, linked by the résumé button in both locales. The remaining variants target different roles and stay unpublished — the site links exactly one CV, by design. See `content-gaps.md` §3. |
 | `Desktop/immar/mobile/**/ic_launcher.png` | App launcher icons only — no product screens. |
 
 ## What does not exist in any source
