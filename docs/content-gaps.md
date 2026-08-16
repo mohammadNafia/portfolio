@@ -69,16 +69,21 @@ as a sawtooth-cropped portrait is a separate, larger piece of art direction.
 
 ---
 
-## 3. A single canonical CV
+## 3. A single canonical CV — RESOLVED
 
-**Current state:** **no CV link exists anywhere on the site.** `Desktop/cv/` holds seven PDF
-variants targeted at different roles, and none is identifiable as current. The prompt requires
-a CV button only if a real current CV exists, so the button was omitted rather than pointed at
-a guess.
+**Resolved.** `Desktop/cv/Mohammed-Nafia-cv.pdf` was confirmed as the current one and is
+published at `public/Mohammed-Nafia-CV.pdf`, linked by the résumé button at the foot of the
+Background section in both locales.
 
-**What to supply:** one PDF, confirmed current.
-**Where it goes:** `public/mohammed-nafia-cv.pdf`, then add a link in the About page contact
-block and the footer.
+The two earlier PDFs that had been sitting in `public/` were deleted rather than left in
+place. Both were byte-identical copies of an older draft, neither was linked, and an
+unlinked file in a public directory is still one URL guess away from being read as
+current. `/Mohammed-nafia-cv.pdf` and `/Mohammed_Nafia_Mid_Level_Full_Stack_CV.pdf` now
+return 404.
+
+The remaining variants in `Desktop/cv/` are role-targeted alternates and stay unpublished.
+If one of them ever becomes the canonical version, replace the file above rather than
+adding a second — the site links exactly one CV, by design.
 
 ---
 

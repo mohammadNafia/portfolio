@@ -270,6 +270,50 @@ test.describe('generated metadata routes', () => {
     });
   }
 
+  /**
+   * The résumé button is the one link on the site that hands over a file, and
+   * it is the easiest thing on the page to break silently: the target is a
+   * static asset with no import, no type and no build step, so renaming it
+   * leaves a button that looks perfectly fine and downloads a 404 page.
+   *
+   * Asserted through the DOM rather than against a hard-coded path, so
+   * changing the filename is not a failure — only changing it in one place is.
+   * Both locales, because the button renders from a shared component and a
+   * regression there would take both down together.
+   */
+  for (const locale of ['en', 'ar'] as const) {
+    test(`the ${locale} résumé button downloads a real PDF`, async ({ page, request }) => {
+      await page.goto(`/${locale}`);
+
+      const button = page.locator('a[download]');
+      await expect(button, 'no download link on the page').toHaveCount(1);
+
+      const href = await button.getAttribute('href');
+      expect(href, 'the résumé button has no href').toBeTruthy();
+
+      const response = await request.get(href!, { maxRedirects: 0 });
+      expect(response.status(), `${href} does not resolve`).toBe(200);
+      expect(response.headers()['content-type']).toMatch(/pdf/);
+
+      /* A real PDF, not an HTML error page served with a generous status. */
+      const body = await response.body();
+      expect(body.subarray(0, 5).toString('latin1'), `${href} is not a PDF`).toBe('%PDF-');
+      expect(body.length, `${href} is suspiciously small`).toBeGreaterThan(10_000);
+    });
+  }
+
+  /**
+   * The superseded drafts must stay gone. They were byte-identical copies of an
+   * older CV, and an unlinked file in a public directory is still one URL guess
+   * away from being read as current.
+   */
+  for (const stale of ['/Mohammed-nafia-cv.pdf', '/Mohammed_Nafia_Mid_Level_Full_Stack_CV.pdf']) {
+    test(`the superseded CV at ${stale} is gone`, async ({ request }) => {
+      const response = await request.get(stale, { maxRedirects: 0 });
+      expect(response.status(), `${stale} is still being served`).toBe(404);
+    });
+  }
+
   test('the linked favicon href actually resolves', async ({ page, request }) => {
     await page.goto('/en');
     const href = await page.locator('link[rel="icon"]').first().getAttribute('href');

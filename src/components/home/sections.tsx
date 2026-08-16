@@ -155,7 +155,17 @@ export function Background({ dict }: { dict: Dictionary }) {
       </div>
 
       <Reveal className="mt-14 flex justify-center" delay={240}>
-        <Button variant="dark" href="/Mohammed-nafia-cv.pdf" download>
+        {/*
+          One filename, referenced once. `download` hands the visitor the file
+          named exactly this, so it is capitalised the way a document should be
+          rather than the way a URL usually is.
+
+          The two earlier PDFs it replaced are deleted rather than left in
+          place: a public directory is a public directory, and an outdated
+          draft that nothing links to is still one URL guess away from being
+          read as current.
+        */}
+        <Button variant="dark" href="/Mohammed-Nafia-CV.pdf" download>
           {background.cv}
         </Button>
       </Reveal>
